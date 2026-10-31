@@ -15,7 +15,7 @@ import summarize from './summarize/index.js';
 // appears in the sidebar and on the Files page. Optional: `cta` = the verb on its Files-page card ("Run diff"), `badge` = small tag in the
 // sidebar ("Fast"), `recommend(datasets)` = a short note ("Key: Order ID") when the tool suits the loaded files, else null.
 // `title` names the group in the sidebar, `tab` on the Files page. `resultLabel` = last level of the header breadcrumb on the tool's
-// results ("Workspace › Diff Check › Diff result").
+// results ("Workspace › Diff Check › Diff result"). Tool ids "files" and "info" are taken (Files page, How-it-works page).
 export const CATEGORIES = [
   { id: 'compare', title: 'Compare & Match', tab: 'Compare & Match' },
   { id: 'clean', title: 'Clean & Validate', tab: 'Clean & Fix' },
@@ -28,8 +28,9 @@ export const tools = [diffcheck, keycompare, lookup, reconcile, duplicates, clea
 export const isReady = (tool, loaded) => (tool.needs === 0 ? true : tool.needs === 1 ? loaded.some(Boolean) : loaded.every(Boolean));
 export const needsHint = (tool) => (tool.needs === 1 ? 'Load a file first' : 'Load both files first');
 
-/** The page a URL may show: unknown ids and tools whose files are not loaded yet fall back to the Files page. */
+/** The page a URL may show: unknown ids and tools whose files are not loaded yet fall back to the Files page. "info" (How it works) is always open. */
 export const resolveRoute = (id, loaded) => {
+  if (id === 'info') return 'info';
   const tool = tools.find((t) => t.id === id);
   return tool && isReady(tool, loaded) ? tool.id : 'files';
 };

@@ -82,6 +82,7 @@ export default function SplitResults({ result, ctx, ms, onRestart }) {
           <>
             <Button label="New split" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton
+              reuse={false} // many files: nothing single to keep working on
               label={output === 'zip' ? 'Download ZIP' : 'Download Excel'}
               title={output === 'zip' ? 'Building your files' : 'Building your Excel file'}
               disabled={!included.length}

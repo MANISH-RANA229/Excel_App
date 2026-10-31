@@ -11,7 +11,8 @@ export default function AppShell({ nav, active, phase, storage, onNavigate, onCl
   const [navOpen, setNavOpen] = useState(false);
   const current = nav.flatMap((g) => g.items).find((i) => i.id === active);
   const onResults = phase?.phase === 'results' && !!current?.resultLabel;
-  const crumbs = current && [
+  const onInfo = active === 'info'; // not in `nav`: reached from the header's "i" button
+  const crumbs = onInfo ? [{ label: 'Workspace', href: '#/files' }, { label: 'How it works' }] : current && [
     { label: 'Workspace', href: '#/files' },
     { label: current.crumb ?? current.label, onClick: onResults ? phase.back : undefined },
     ...(onResults ? [{ label: current.resultLabel }] : []),
@@ -19,7 +20,7 @@ export default function AppShell({ nav, active, phase, storage, onNavigate, onCl
 
   return (
     <div className={`shell${navOpen ? ' nav-open' : ''}`}>
-      <GlobalHeader crumbs={crumbs} nav={nav} onNavigate={onNavigate} onMenu={() => setNavOpen((o) => !o)} />
+      <GlobalHeader crumbs={crumbs} nav={nav} onNavigate={onNavigate} onMenu={() => setNavOpen((o) => !o)} infoActive={onInfo} />
       <Sidebar nav={nav} active={active} storage={storage} onSelect={(id) => { onNavigate(id); setNavOpen(false); }} onClear={onClear} />
       {navOpen && <div className="shell__backdrop" onClick={() => setNavOpen(false)} aria-hidden="true" />}
       <main className="shell__main">{children}</main>

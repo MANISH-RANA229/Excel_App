@@ -1,9 +1,10 @@
 import { Fragment } from 'react';
-import { ChevronRight, FileSpreadsheet, Menu, ShieldCheck } from 'lucide-react';
+import { ChevronRight, FileSpreadsheet, Info, Menu, ShieldCheck } from 'lucide-react';
 import HeaderSearch from './HeaderSearch.jsx';
 
 // crumbs = [{ label, href? | onClick? }]; the last one is the current page. Hash links: useHashRoute turns "#/files" into the Files page.
-export default function GlobalHeader({ crumbs, nav, onNavigate, onMenu }) {
+// infoActive = the "How it works" page is open (the "i" button is its link).
+export default function GlobalHeader({ crumbs, nav, onNavigate, onMenu, infoActive }) {
   return (
     <header className="gheader">
       <button type="button" className="gheader__menu" onClick={onMenu} aria-label="Toggle navigation">
@@ -32,6 +33,15 @@ export default function GlobalHeader({ crumbs, nav, onNavigate, onMenu }) {
         <ShieldCheck size={16} aria-hidden="true" />
         <span>Local only · 100% Private</span>
       </span>
+      <a
+        className={`gheader__info${infoActive ? ' is-active' : ''}`}
+        href="#/info"
+        aria-label="How Excel Suite works"
+        aria-current={infoActive ? 'page' : undefined}
+        title="How it works"
+      >
+        <Info size={18} aria-hidden="true" />
+      </a>
     </header>
   );
 }

@@ -5,7 +5,8 @@ const byNeeds = (n) => tools.find((t) => t.needs === n).id;
 const none = [false, false], one = [true, false], both = [true, true];
 
 assert.equal(new Set(tools.map((t) => t.id)).size, tools.length, 'tool ids are unique (they are the URLs)');
-assert.ok(!tools.some((t) => t.id === 'files'), '"files" is reserved for the Files page');
+assert.ok(!tools.some((t) => t.id === 'files' || t.id === 'info'), '"files" and "info" are reserved for the Files and How-it-works pages');
+assert.equal(resolveRoute('info', [false, false]), 'info', 'How it works needs no files');
 assert.ok(tools.every((t) => t.resultLabel), 'every tool names its results page (header breadcrumb)');
 
 assert.equal(resolveRoute('files', both), 'files');
