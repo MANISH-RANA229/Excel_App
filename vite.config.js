@@ -28,4 +28,6 @@ const excelTheme = () => ({
 export default defineConfig({
   plugins: [excelTheme(), react()],
   worker: { format: 'es' },
+  // Workers import these dynamically, so the dev server can't discover them up front.
+  optimizeDeps: { include: ['exceljs', 'jszip', 'xlsx'] },
 });

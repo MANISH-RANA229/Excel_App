@@ -1,4 +1,4 @@
-import { getBand } from './bands.js';
+import { getBand } from '../../core/bands.js';
 
 export default function BandTag({ pct }) {
   const band = getBand(pct);

@@ -1,11 +1,12 @@
 import { Dropdown } from 'primereact/dropdown';
 import { MultiSelect } from 'primereact/multiselect';
-import { InputNumber } from 'primereact/inputnumber';
+import NumberInput from '../../shared/fields/NumberInput.jsx';
 import { Button } from 'primereact/button';
 import { Info, Play } from 'lucide-react';
+import { sampleValues } from '../../core/dataset/dataset.js';
 
 function SidePicker({ label, data, column, carry, onColumn, onCarry }) {
-  const samples = column ? data.rows.map((r) => r[column]).filter(Boolean).slice(0, 4) : [];
+  const samples = column ? sampleValues(data, column, 4) : [];
   return (
     <div className="side">
       <div className="side__head">
@@ -35,7 +36,7 @@ function SidePicker({ label, data, column, carry, onColumn, onCarry }) {
 
 export default function DiffConfig({ datasets: [a, b], config, onChange, onRun }) {
   const set = (patch) => onChange({ ...config, ...patch });
-  const pairs = a.rows.length * b.rows.length;
+  const pairs = a.rowCount * b.rowCount;
 
   return (
     <div className="card config">
@@ -48,8 +49,7 @@ export default function DiffConfig({ datasets: [a, b], config, onChange, onRun }
       <div className="config__foot">
         <label className="field field--inline">
           <span>Matches per row</span>
-          <InputNumber value={config.topK} onValueChange={(e) => set({ topK: e.value ?? 1 })} min={1} max={10}
-            showButtons buttonLayout="horizontal" inputClassName="num-input" />
+          <NumberInput label="matches per row" value={config.topK} onValueChange={(e) => set({ topK: e.value ?? 1 })} min={1} max={10} inputClassName="num-input" />
         </label>
         <p className="hint">
           <Info size={14} aria-hidden="true" />

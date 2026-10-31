@@ -3,18 +3,18 @@ import { ArrowLeftRight } from 'lucide-react';
 import PageHeader from '../layout/PageHeader.jsx';
 import FileDropCard from '../shared/FileDropCard.jsx';
 import ToolPicker from '../features/ToolPicker.jsx';
-import { tools } from '../features/index.js';
 
-export default function FilesPage({ files, onFiles, ready, onOpenTool }) {
-  const setFile = (i) => (f) => onFiles(files.map((p, j) => (j === i ? f : p)));
+export default function FilesPage({ files, onFiles, loaded, onOpenTool }) {
+  // Functional updates: two cards can finish loading at nearly the same moment.
+  const setFile = (i) => (f) => onFiles((prev) => prev.map((p, j) => (j === i ? f : p)));
 
   return (
     <div className="page">
       <PageHeader
         title="Files"
-        subtitle="Load the two spreadsheets to work with (.xlsx, .xls, .csv). Header rows are detected automatically."
+        subtitle="Load the spreadsheets to work with (.xlsx, .xls, .csv). Header rows are detected automatically."
         actions={files[0] && files[1] && (
-          <Button label="Swap files" size="small" outlined icon={<ArrowLeftRight size={14} />} onClick={() => onFiles([files[1], files[0]])} />
+          <Button label="Swap files" size="small" outlined icon={<ArrowLeftRight size={14} />} onClick={() => onFiles((prev) => [prev[1], prev[0]])} />
         )}
       />
       <div className="grid-2">
@@ -23,7 +23,7 @@ export default function FilesPage({ files, onFiles, ready, onOpenTool }) {
       </div>
       <section className="section">
         <h2 className="section__title">Tools</h2>
-        <ToolPicker tools={tools} disabled={!ready} onOpen={onOpenTool} />
+        <ToolPicker loaded={loaded} onOpen={onOpenTool} />
       </section>
     </div>
   );

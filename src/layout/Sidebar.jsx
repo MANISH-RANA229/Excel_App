@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 
-/** nav = [{ title, items: [{ id, label, icon, hint, disabled }] }] */
+/** nav = [{ title, items: [{ id, label, icon, hint, disabled, disabledReason }] }] */
 export default function Sidebar({ nav, active, onSelect, onClear }) {
   return (
     <aside className="sidebar" aria-label="Main navigation">
@@ -8,14 +8,14 @@ export default function Sidebar({ nav, active, onSelect, onClear }) {
         {nav.map((group) => (
           <div key={group.title} className="sidebar__group">
             <div className="sidebar__title">{group.title}</div>
-            {group.items.map(({ id, label, icon: Icon, hint, disabled }) => (
+            {group.items.map(({ id, label, icon: Icon, hint, disabled, disabledReason }) => (
               <button
                 key={id}
                 type="button"
                 className={`sidebar__item${active === id ? ' is-active' : ''}`}
                 aria-current={active === id ? 'page' : undefined}
                 disabled={disabled}
-                title={disabled ? 'Load both files first' : undefined}
+                title={disabled ? disabledReason : undefined}
                 onClick={() => onSelect(id)}
               >
                 <Icon size={16} aria-hidden="true" />

@@ -7,10 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "node src/features/diffcheck/engine/diffEngine.check.js"
+    "check": "node scripts/check.mjs"
   },
   "dependencies": {
-    "exceljs": "^4.4.0",
     "lucide-react": "^1.66.0",
     "primereact": "^10.9.9",
     "react": "^19.3.1",
@@ -19,6 +18,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.1.2",
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.2",
     "vite": "^8.3.5"
   }
 }

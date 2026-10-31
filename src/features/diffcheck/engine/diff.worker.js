@@ -1,10 +1,11 @@
+import { defineWorker, withTransfer } from '../../../workers/defineWorker.js';
 import { runDiff } from './diffEngine.js';
 
-self.onmessage = ({ data }) => {
-  try {
-    const result = runDiff(data.textsA, data.textsB, data.options, (value) => self.postMessage({ type: 'progress', value }));
-    self.postMessage({ type: 'done', result });
-  } catch (err) {
-    self.postMessage({ type: 'error', message: err.message });
-  }
-};
+defineWorker(({ textsA, textsB, options }, { report }) => {
+  const total = textsA.length;
+  report({ step: 1, stage: 'Indexing words', fraction: null });
+  const result = runDiff(textsA, textsB, options, (fraction) => report({
+    step: 2, stage: 'Matching rows', fraction, processed: Math.round(fraction * total), total,
+  }));
+  return withTransfer(result, [result.a.buffer, result.b.buffer, result.pct.buffer, result.rank.buffer, result.unmatchedB.buffer]);
+});

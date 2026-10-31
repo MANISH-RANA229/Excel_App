@@ -1,75 +1,136 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Dropdown } from 'primereact/dropdown';
-import { InputNumber } from 'primereact/inputnumber';
+import NumberInput from './fields/NumberInput.jsx';
 import { Button } from 'primereact/button';
 import { Message } from 'primereact/message';
-import { ProgressSpinner } from 'primereact/progressspinner';
 import { FileSpreadsheet, FileUp, X } from 'lucide-react';
-import { detectHeaderRow, readWorkbook, toTable } from './readWorkbook.js';
+import { useWorkerTask } from '../hooks/useWorkerTask.js';
 import DataPreview from './DataPreview.jsx';
+import ErrorNotice from './ErrorNotice.jsx';
+import JobProgress from './JobProgress.jsx';
 
-const ACCEPT = '.xlsx,.xls,.csv';
+const createWorker = () => new Worker(new URL('../workers/readWorkbook.worker.js', import.meta.url), { type: 'module' });
+const STAGES = ['Reading file', 'Scanning sheets', 'Building columns'];
+export const ACCEPT = '.xlsx,.xls,.csv';
+const HEADER_DEBOUNCE_MS = 500;
 
-// Selects a sheet + header row and derives its table in one step.
-function withSheet(wb, sheet, headerRow = detectHeaderRow(wb.sheets[sheet])) {
-  return { ...wb, sheet, headerRow, table: toTable(wb.sheets[sheet], headerRow) };
-}
-
-/** Upload slot for one spreadsheet. value = { fileName, sheets, sheet, headerRow, table } | null */
-export default function FileDropCard({ label, value, onChange }) {
+/**
+ * Upload slot for one spreadsheet. Parsing runs in a worker (loader shown inline, cancellable).
+ * value = { file, sheetNames, dims, warnings, dataset } | null  — see core/dataset/dataset.js
+ *
+ * For tools that own a list of files: `initialFile` (+ `initialSheet`) starts reading on mount, `compact` shows a one-row
+ * card without the preview, `actions` adds buttons to its header, and onChange(null) means "remove this one".
+ */
+export default function FileDropCard({ label, value, onChange, initialFile, initialSheet, compact = false, actions }) {
   const inputRef = useRef(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const pendingFile = useRef(null);
   const [dragging, setDragging] = useState(false);
+  const [headerDraft, setHeaderDraft] = useState(null);
+  const task = useWorkerTask(createWorker);
+  const busy = task.status === 'running';
+  const dataset = value?.dataset;
 
-  async function load(file) {
-    if (!file) return;
-    if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
-      setError('Please choose a .xlsx, .xls or .csv file.');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const wb = await readWorkbook(file);
-      const names = Object.keys(wb.sheets);
-      onChange(withSheet(wb, names.find((n) => wb.sheets[n].matrix.length > 1) ?? names[0]));
-    } catch (e) {
-      setError(`Could not read this file: ${e.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const read = useCallback((file, opts) => {
+    pendingFile.current = file;
+    task.start({ file, ...opts });
+  }, [task.start]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const input = (
-    <input ref={inputRef} type="file" accept={ACCEPT} hidden onChange={(e) => { load(e.target.files[0]); e.target.value = ''; }} />
+  useEffect(() => {
+    if (task.status !== 'done') return;
+    onChange({ file: pendingFile.current, ...task.result });
+    task.reset();
+  }, [task.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const started = useRef(false);
+  useEffect(() => {
+    if (!initialFile || value || started.current) return;
+    started.current = true;
+    read(initialFile, initialSheet ? { sheet: initialSheet } : undefined);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Header-row edits re-read the sheet; wait until the user stops clicking.
+  useEffect(() => { setHeaderDraft(dataset?.headerRow ?? null); }, [dataset?.id, task.status === 'error']); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!value || headerDraft == null || headerDraft === dataset.headerRow) return undefined;
+    const t = setTimeout(() => read(value.file, { sheet: dataset.sheet, headerRow: headerDraft }), HEADER_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [headerDraft]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loader = (
+    <JobProgress
+      variant="inline"
+      title={`Reading ${pendingFile.current?.name ?? 'file'}`}
+      stages={STAGES}
+      progress={task.progress}
+      elapsedMs={task.elapsedMs}
+      etaMs={task.etaMs}
+      unit="rows"
+      onCancel={task.cancel}
+    />
   );
+  const input = (
+    <input ref={inputRef} type="file" accept={ACCEPT} hidden onChange={(e) => { if (e.target.files[0]) read(e.target.files[0]); e.target.value = ''; }} />
+  );
+  const error = <ErrorNotice error={task.error} onRetry={value ? undefined : () => inputRef.current.click()} retryLabel="Choose another file" onDismiss={task.reset} />;
+
+  if (compact) {
+    const name = dataset?.fileName ?? pendingFile.current?.name ?? initialFile?.name ?? label;
+    return (
+      <div className="card file-card file-card--compact">
+        <div className="file-card__head">
+          <FileSpreadsheet size={18} className="text-brand" aria-hidden="true" />
+          <div className="file-card__name">
+            <span className="card__label">{label}</span>
+            <strong title={name}>{name}</strong>
+          </div>
+          {dataset && <span className="file-card__meta">{dataset.rowCount.toLocaleString()} rows · {dataset.columns.length} cols</span>}
+          {actions}
+          <Button text rounded size="small" severity="secondary" aria-label={`Remove ${name}`} icon={<X size={16} />} onClick={() => { task.reset(); onChange(null); }} />
+        </div>
+        {value && (
+          <div className="file-card__controls">
+            <label className="field">
+              <span>Sheet</span>
+              <Dropdown value={dataset.sheet} options={value.sheetNames} disabled={busy} onChange={(e) => read(value.file, { sheet: e.value })} className="w-full" />
+            </label>
+            <label className="field field--narrow">
+              <span>Header row</span>
+              <NumberInput label={`header row of ${name}`} value={headerDraft} onValueChange={(e) => e.value && setHeaderDraft(e.value)} min={1} disabled={busy} inputClassName="num-input" />
+            </label>
+          </div>
+        )}
+        {error}
+        {value?.warnings.map((w) => <Message key={w} severity="warn" text={w} className="w-full" />)}
+        {value && !dataset.rowCount && !busy && <Message severity="warn" text="No data rows below the header row." className="w-full" />}
+        {busy && loader}
+        {input}
+      </div>
+    );
+  }
 
   if (!value) {
     return (
       <div className="card file-card">
         <div className="card__label">{label}</div>
-        <button
-          type="button"
-          className={`dropzone${dragging ? ' is-dragging' : ''}`}
-          onClick={() => inputRef.current.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(e) => { e.preventDefault(); setDragging(false); load(e.dataTransfer.files[0]); }}
-          disabled={loading}
-        >
-          {loading ? <ProgressSpinner style={{ width: 28, height: 28 }} strokeWidth="5" /> : <FileUp size={24} aria-hidden="true" />}
-          <span className="dropzone__title">{loading ? 'Reading file…' : 'Drop a file or click to browse'}</span>
-          <span className="dropzone__hint">.xlsx · .xls · .csv</span>
-        </button>
+        {busy ? loader : (
+          <button
+            type="button"
+            className={`dropzone${dragging ? ' is-dragging' : ''}`}
+            onClick={() => inputRef.current.click()}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files[0]) read(e.dataTransfer.files[0]); }}
+          >
+            <FileUp size={24} aria-hidden="true" />
+            <span className="dropzone__title">Drop a file or click to browse</span>
+            <span className="dropzone__hint">.xlsx · .xls · .csv</span>
+          </button>
+        )}
         {input}
-        {error && <Message severity="error" text={error} className="w-full" />}
+        {error}
       </div>
     );
   }
-
-  const sheet = value.sheets[value.sheet];
-  const { columns, rows } = value.table;
 
   return (
     <div className="card file-card">
@@ -77,31 +138,38 @@ export default function FileDropCard({ label, value, onChange }) {
         <FileSpreadsheet size={18} className="text-brand" aria-hidden="true" />
         <div className="file-card__name">
           <span className="card__label">{label}</span>
-          <strong title={value.fileName}>{value.fileName}</strong>
+          <strong title={dataset.fileName}>{dataset.fileName}</strong>
         </div>
-        <span className="file-card__meta">{rows.length.toLocaleString()} rows · {columns.length} cols</span>
-        <Button text rounded size="small" severity="secondary" aria-label={`Remove ${label}`} icon={<X size={16} />} onClick={() => onChange(null)} />
+        <span className="file-card__meta">{dataset.rowCount.toLocaleString()} rows · {dataset.columns.length} cols</span>
+        <Button text rounded size="small" severity="secondary" aria-label={`Remove ${label}`} icon={<X size={16} />} onClick={() => { task.reset(); onChange(null); }} />
       </div>
       <div className="file-card__controls">
         <label className="field">
           <span>Sheet</span>
-          <Dropdown value={value.sheet} options={Object.keys(value.sheets)} onChange={(e) => onChange(withSheet(value, e.value))} className="w-full" />
+          <Dropdown
+            value={dataset.sheet}
+            options={value.sheetNames}
+            disabled={busy}
+            onChange={(e) => read(value.file, { sheet: e.value })}
+            className="w-full"
+          />
         </label>
         <label className="field field--narrow">
           <span>Header row</span>
-          <InputNumber
-            value={value.headerRow}
-            onValueChange={(e) => e.value && onChange(withSheet(value, value.sheet, e.value))}
-            min={sheet.firstRow}
-            max={sheet.firstRow + Math.max(0, sheet.matrix.length - 1)}
-            showButtons
-            buttonLayout="horizontal"
+          <NumberInput
+            label="header row"
+            value={headerDraft}
+            onValueChange={(e) => e.value && setHeaderDraft(e.value)}
+            min={1}
+            disabled={busy}
             inputClassName="num-input"
           />
         </label>
       </div>
-      {rows.length ? (
-        <DataPreview columns={columns} rows={rows} rowNums={value.table.rowNums} />
+      {error}
+      {value.warnings.map((w) => <Message key={w} severity="warn" text={w} className="w-full" />)}
+      {busy ? loader : dataset.rowCount ? (
+        <DataPreview dataset={dataset} />
       ) : (
         <Message severity="warn" text="No data rows below the header row." className="w-full" />
       )}
