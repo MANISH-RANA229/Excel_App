@@ -4,9 +4,11 @@ import { Sigma } from 'lucide-react';
 export default {
   id: 'summarize',
   title: 'Summarize',
+  resultLabel: 'Summary result',
   description: 'Totals, counts and averages per group without building a pivot table. Also turns columns into rows (unpivot) and swaps rows and columns.',
   icon: Sigma,
   category: 'organize',
   needs: 1,
+  cta: 'Summarize',
   Component: lazy(() => import('./SummarizeTool.jsx')),
 };

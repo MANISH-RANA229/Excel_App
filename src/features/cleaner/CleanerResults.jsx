@@ -6,7 +6,7 @@ import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
 import { Message } from 'primereact/message';
-import { RotateCcw, Search, SlidersHorizontal } from 'lucide-react';
+import { RotateCcw, Search } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { formatDuration } from '../../core/format.js';
 import ExportButton from '../../shared/results/ExportButton.jsx';
@@ -14,7 +14,7 @@ import GridTable from '../../shared/results/GridTable.jsx';
 import KpiStrip from '../../shared/results/KpiStrip.jsx';
 import { buildCleanerExport, describeStat, stepLabel } from './exportSpec.js';
 
-export default function CleanerResults({ result, ctx, ms, onEdit, onRestart }) {
+export default function CleanerResults({ result, ctx, ms, onRestart }) {
   const { ds, steps } = ctx;
   const { names, log, stats, totals } = result;
   const [highlight, setHighlight] = useState(true);
@@ -53,8 +53,8 @@ export default function CleanerResults({ result, ctx, ms, onEdit, onRestart }) {
         <InputIcon><Search size={14} /></InputIcon>
         <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search before / after" aria-label="Search changes" className="p-inputtext-sm w-full" />
       </IconField>
-      <Dropdown value={column} options={columnOptions} onChange={(e) => setColumn(e.value)} className="toolbar__select" aria-label="Filter by column" />
-      <Dropdown value={stepNo} options={stepOptions} onChange={(e) => setStepNo(e.value)} className="toolbar__select toolbar__select--wide" aria-label="Filter by step" />
+      <Dropdown value={column} options={columnOptions} onChange={(e) => setColumn(e.value)} placeholder="All columns" className="toolbar__select" aria-label="Filter by column" />
+      <Dropdown value={stepNo} options={stepOptions} onChange={(e) => setStepNo(e.value)} placeholder="All steps" className="toolbar__select toolbar__select--wide" aria-label="Filter by step" />
       <span className="toolbar__count">{total.toLocaleString()} of {count.toLocaleString()} changes</span>
     </div>
   );
@@ -68,7 +68,6 @@ export default function CleanerResults({ result, ctx, ms, onEdit, onRestart }) {
         subtitle={`${ds.fileName} · ${steps.length} ${steps.length === 1 ? 'step' : 'steps'} · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Settings" size="small" outlined severity="secondary" icon={<SlidersHorizontal size={14} />} onClick={onEdit} />
             <Button label="Clean another" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton label="Download cleaned file" disabled={nothing} buildSpec={() => buildCleanerExport(result, ctx, { highlight })} />
           </>

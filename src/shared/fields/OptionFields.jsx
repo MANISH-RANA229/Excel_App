@@ -19,7 +19,7 @@ function Pairs({ value, onChange, labels = ['Find', 'Replace with'] }) {
           <Button icon={<X size={14} />} text rounded size="small" severity="secondary" aria-label="Remove this pair" disabled={value.length === 1} onClick={() => onChange(value.filter((_, j) => j !== i))} />
         </div>
       ))}
-      <Button label="Add another" icon={<Plus size={14} />} text size="small" onClick={() => onChange([...value, { find: '', with: '' }])} />
+      <Button label="Add another" icon={<Plus size={14} />} text size="small" className="btn-add" onClick={() => onChange([...value, { find: '', with: '' }])} />
     </div>
   );
 }
@@ -59,7 +59,7 @@ function Conditions({ value, onChange, columns }) {
           </div>
         );
       })}
-      <div><Button label="Add a rule" icon={<Plus size={14} />} text size="small" onClick={() => onChange([...value, { ...NEW_RULE }])} /></div>
+      <div><Button label="Add a rule" icon={<Plus size={14} />} text size="small" className="btn-add" onClick={() => onChange([...value, { ...NEW_RULE }])} /></div>
     </div>
   );
 }

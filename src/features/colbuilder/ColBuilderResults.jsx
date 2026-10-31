@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Button } from 'primereact/button';
-import { RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { OPS } from '../../core/columns/operations.js';
 import { formatDuration } from '../../core/format.js';
@@ -10,7 +10,7 @@ import ResultGrid from '../../shared/results/ResultGrid.jsx';
 import { buildBuilderExport } from './exportSpec.js';
 import { usedColumns } from './table.js';
 
-export default function ColBuilderResults({ result, ctx, ms, onEdit, onRestart }) {
+export default function ColBuilderResults({ result, ctx, ms, onRestart }) {
   const { ds, steps } = ctx;
   const { added, stats } = result;
   const failed = stats.reduce((n, s) => n + s.failed, 0);
@@ -32,7 +32,6 @@ export default function ColBuilderResults({ result, ctx, ms, onEdit, onRestart }
         subtitle={`${ds.fileName} · ${ds.sheet} · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Settings" size="small" outlined severity="secondary" icon={<SlidersHorizontal size={14} />} onClick={onEdit} />
             <Button label="Start again" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton label="Download Excel" buildSpec={() => buildBuilderExport(result, { ds, steps })} />
           </>

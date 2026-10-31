@@ -16,3 +16,12 @@ export function estimateEta(fraction, stepElapsedMs) {
   if (fraction == null || fraction < 0.03 || fraction >= 1 || stepElapsedMs < 1000) return null;
   return (stepElapsedMs * (1 - fraction)) / fraction;
 }
+
+/** 1536 → "1.5 KB". */
+export function formatBytes(n) {
+  if (!(n >= 1024)) return `${n || 0} B`;
+  const units = ['KB', 'MB', 'GB'];
+  let v = n / 1024, i = 0;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return `${v.toFixed(v < 10 ? 1 : 0)} ${units[i]}`;
+}

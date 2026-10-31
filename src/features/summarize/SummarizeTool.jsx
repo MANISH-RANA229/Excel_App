@@ -29,7 +29,7 @@ export default function SummarizeTool({ datasets, onRestart }) {
       task={task}
       job={{ title: `${mode.action === 'Summarize' ? 'Summarizing' : mode.action} ${ds.rowCount.toLocaleString()} rows`, stages: [mode.stage], unit: 'rows' }}
       renderConfig={() => <SummarizeConfig source={source} config={current} problem={validateConfig(current)} onChange={setConfig} onRun={run} />}
-      renderResults={(result) => <SummarizeResults result={result} ctx={ctx} ms={task.elapsedMs} onEdit={task.reset} onRestart={onRestart} />}
+      renderResults={(result) => <SummarizeResults result={result} ctx={ctx} ms={task.elapsedMs} onRestart={onRestart} />}
     />
   );
 }

@@ -3,7 +3,7 @@ import { Button } from 'primereact/button';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
-import { RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
+import { RotateCcw, Search, X } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { columnTexts } from '../../core/dataset/dataset.js';
 import { formatDuration } from '../../core/format.js';
@@ -27,7 +27,7 @@ const CellChange = ({ name, from, to }) => (
   </span>
 );
 
-export default function KeyCompareResults({ result, ctx, ms, onEdit, onRestart }) {
+export default function KeyCompareResults({ result, ctx, ms, onRestart }) {
   const { a, b, config, compared } = ctx;
   const [status, setStatus] = useState(null);
   const [search, setSearch] = useState('');
@@ -127,7 +127,6 @@ export default function KeyCompareResults({ result, ctx, ms, onEdit, onRestart }
         subtitle={`${a.fileName} (old) ↔ ${b.fileName} (new) · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Settings" size="small" outlined severity="secondary" icon={<SlidersHorizontal size={14} />} onClick={onEdit} />
             <Button label="New comparison" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton label="Download report" buildSpec={() => buildKeyCompareExport(result, { a, b, config, compared, description: describeConfig(config, compared) })} />
           </>

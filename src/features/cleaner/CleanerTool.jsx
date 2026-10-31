@@ -90,7 +90,7 @@ export default function CleanerTool({ datasets, onRestart }) {
           onRun={run}
         />
       )}
-      renderResults={(result) => <CleanerResults result={result} ctx={ctx} ms={task.elapsedMs} onEdit={task.reset} onRestart={onRestart} />}
+      renderResults={(result) => <CleanerResults result={result} ctx={ctx} ms={task.elapsedMs} onRestart={onRestart} />}
     />
   );
 }

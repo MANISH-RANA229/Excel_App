@@ -27,7 +27,7 @@ export default function ReconcileTool({ datasets, onRestart }) {
       task={task}
       job={{ title: `Reconciling ${a.rowCount.toLocaleString()} and ${b.rowCount.toLocaleString()} rows`, stages: stagesFor(toPayload(config, a, b).options), unit: 'rows' }}
       renderConfig={() => <ReconcileConfig datasets={datasets} config={config} problem={problem} onChange={setConfig} onRun={run} />}
-      renderResults={(result) => <ReconcileResults result={result} ctx={ctx} ms={task.elapsedMs} onEdit={task.reset} onRestart={onRestart} />}
+      renderResults={(result) => <ReconcileResults result={result} ctx={ctx} ms={task.elapsedMs} onRestart={onRestart} />}
     />
   );
 }

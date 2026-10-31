@@ -7,7 +7,7 @@ import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { Checkbox } from 'primereact/checkbox';
-import { RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
+import { RotateCcw, Search, X } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { BANDS, bandIndex, summarize } from '../../core/bands.js';
 import { formatDuration } from '../../core/format.js';
@@ -24,7 +24,7 @@ import { sideText } from './side.js';
 
 const NO_MATCH_ROW = 2 ** 31; // sorts unmatched rows last
 
-export default function ResultsView({ result, ms, ctx, onEdit, onRestart }) {
+export default function ResultsView({ result, ms, ctx, onRestart }) {
   const { a, b, topK } = ctx;
   const [band, setBand] = useState(null);
   const [search, setSearch] = useState('');
@@ -127,7 +127,6 @@ export default function ResultsView({ result, ms, ctx, onEdit, onRestart }) {
         subtitle={`"${a.column}" vs "${b.column}" · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Settings" size="small" outlined severity="secondary" icon={<SlidersHorizontal size={14} />} onClick={onEdit} />
             <Button label="New comparison" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton buildSpec={() => buildDiffExport(result, ctx)} />
           </>

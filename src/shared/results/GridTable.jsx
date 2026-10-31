@@ -64,7 +64,7 @@ export default function GridTable({
         className={`grid-table ${className}`}
       >
         {columns.map((c) => (
-          <Column key={c.field ?? c.header ?? 'expander'} field={c.field} header={c.header} body={c.body} sortable={c.sortable} className={c.className} style={c.style} expander={c.expander} />
+          <Column key={c.field ?? c.header ?? 'expander'} field={c.field} header={c.header} body={c.body} sortable={c.sortable} className={c.className} headerClassName={c.className} style={c.style} expander={c.expander} />
         ))}
       </DataTable>
     </>

@@ -7,7 +7,7 @@ import { InputText } from 'primereact/inputtext';
 import { Message } from 'primereact/message';
 import { RadioButton } from 'primereact/radiobutton';
 import { SelectButton } from 'primereact/selectbutton';
-import { RotateCcw, Search, SlidersHorizontal } from 'lucide-react';
+import { RotateCcw, Search } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { columnIndex } from '../../core/dataset/dataset.js';
 import { formatDuration } from '../../core/format.js';
@@ -47,7 +47,7 @@ function Members({ row, result, ds, keyColumns, onKeep }) {
   );
 }
 
-export default function DuplicatesResults({ result, ctx, ms, onEdit, onRestart }) {
+export default function DuplicatesResults({ result, ctx, ms, onRestart }) {
   const { ds, keyColumns, config } = ctx;
   const [keepOverride, setKeepOverride] = useState(() => new Map());
   const [ignored, setIgnored] = useState(() => new Set());
@@ -121,7 +121,6 @@ export default function DuplicatesResults({ result, ctx, ms, onEdit, onRestart }
         subtitle={`${keyColumns.join(' + ')} · ${config.mode === 'similar' ? `similar ≥ ${config.threshold}%` : 'exact'} · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Settings" size="small" outlined severity="secondary" icon={<SlidersHorizontal size={14} />} onClick={onEdit} />
             <Button label="New search" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton
               label={output === 'mark' ? 'Download marked copy' : 'Download cleaned copy'}

@@ -32,7 +32,7 @@ export default function LookupTool({ datasets, onRestart }) {
       task={task}
       job={{ title: `Looking up ${a.rowCount.toLocaleString()} rows in ${b.rowCount.toLocaleString()}`, stages: STAGES, unit: 'rows' }}
       renderConfig={() => <LookupConfig datasets={datasets} config={config} onChange={setConfig} onRun={run} />}
-      renderResults={(result) => <LookupResults result={result} ctx={ctx} ms={task.elapsedMs} onEdit={task.reset} onRestart={onRestart} />}
+      renderResults={(result) => <LookupResults result={result} ctx={ctx} ms={task.elapsedMs} onRestart={onRestart} />}
     />
   );
 }

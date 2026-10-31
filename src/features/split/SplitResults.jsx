@@ -6,7 +6,7 @@ import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { Message } from 'primereact/message';
 import { SelectButton } from 'primereact/selectbutton';
-import { RotateCcw, Search, SlidersHorizontal } from 'lucide-react';
+import { RotateCcw, Search } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { MAX_GROUPS, MAX_GROUPS_WARN } from '../../core/limits.js';
 import { formatDuration } from '../../core/format.js';
@@ -17,7 +17,7 @@ import { buildSplitExport, nameFor } from './exportSpec.js';
 
 const OUTPUTS = [{ label: 'ZIP of workbooks', value: 'zip' }, { label: 'One workbook, a sheet per value', value: 'workbook' }];
 
-export default function SplitResults({ result, ctx, ms, onEdit, onRestart }) {
+export default function SplitResults({ result, ctx, ms, onRestart }) {
   const { ds, column } = ctx;
   const groups = result.labels.length;
   const [output, setOutput] = useState('zip');
@@ -80,7 +80,6 @@ export default function SplitResults({ result, ctx, ms, onEdit, onRestart }) {
         subtitle={`“${column}” · ${ds.rowCount.toLocaleString()} rows · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Settings" size="small" outlined severity="secondary" icon={<SlidersHorizontal size={14} />} onClick={onEdit} />
             <Button label="New split" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton
               label={output === 'zip' ? 'Download ZIP' : 'Download Excel'}

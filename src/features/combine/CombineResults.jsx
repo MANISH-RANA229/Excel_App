@@ -1,5 +1,5 @@
 import { Button } from 'primereact/button';
-import { RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { formatDuration } from '../../core/format.js';
 import ExportButton from '../../shared/results/ExportButton.jsx';
@@ -10,7 +10,7 @@ import { buildCombineExport } from './exportSpec.js';
 
 const MAX_NOTES = 6;
 
-export default function CombineResults({ result, ms, onEdit, onRestart }) {
+export default function CombineResults({ result, ms, onRestart }) {
   const { table, stats } = result;
   const notes = notesOf(stats);
   return (
@@ -20,7 +20,6 @@ export default function CombineResults({ result, ms, onEdit, onRestart }) {
         subtitle={`${stats.sources.length} files and sheets · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Settings" size="small" outlined severity="secondary" icon={<SlidersHorizontal size={14} />} onClick={onEdit} />
             <Button label="Start again" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton label="Download Excel" buildSpec={() => buildCombineExport(result)} />
           </>

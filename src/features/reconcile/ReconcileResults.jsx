@@ -3,7 +3,7 @@ import { Button } from 'primereact/button';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
-import { RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
+import { RotateCcw, Search, X } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { columnIndex, columnTexts } from '../../core/dataset/dataset.js';
 import { formatDuration } from '../../core/format.js';
@@ -54,7 +54,7 @@ function Lines({ i, result, ctx }) {
   );
 }
 
-export default function ReconcileResults({ result, ctx, ms, onEdit, onRestart }) {
+export default function ReconcileResults({ result, ctx, ms, onRestart }) {
   const { a, b, config } = ctx;
   const [group, setGroup] = useState(null);
   const [search, setSearch] = useState('');
@@ -115,7 +115,6 @@ export default function ReconcileResults({ result, ctx, ms, onEdit, onRestart })
         subtitle={`${a.fileName} ↔ ${b.fileName} · ${config.mode === 'sum' ? 'total per reference' : 'line by line'} · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Settings" size="small" outlined severity="secondary" icon={<SlidersHorizontal size={14} />} onClick={onEdit} />
             <Button label="New reconciliation" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton
               label="Download report"

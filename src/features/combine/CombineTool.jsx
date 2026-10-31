@@ -48,7 +48,7 @@ export default function CombineTool({ onRestart }) {
           onRun={() => task.start({ sources: loaded, options: toOptions(config, loaded) })}
         />
       )}
-      renderResults={(result) => <CombineResults result={result} ms={task.elapsedMs} onEdit={task.reset} onRestart={onRestart} />}
+      renderResults={(result) => <CombineResults result={result} ms={task.elapsedMs} onRestart={onRestart} />}
     />
   );
 }

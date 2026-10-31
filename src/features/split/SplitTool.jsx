@@ -28,7 +28,7 @@ export default function SplitTool({ datasets, onRestart }) {
       task={task}
       job={{ title: `Grouping ${ds.rowCount.toLocaleString()} rows`, stages: ['Grouping rows'], unit: 'rows' }}
       renderConfig={() => <SplitConfig source={source} config={config} column={column} onChange={setConfig} onRun={run} />}
-      renderResults={(result) => <SplitResults result={result} ctx={ctx} ms={task.elapsedMs} onEdit={task.reset} onRestart={onRestart} />}
+      renderResults={(result) => <SplitResults result={result} ctx={ctx} ms={task.elapsedMs} onRestart={onRestart} />}
     />
   );
 }

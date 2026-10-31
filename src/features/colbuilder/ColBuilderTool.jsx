@@ -64,7 +64,7 @@ export default function ColBuilderTool({ datasets, onRestart }) {
           onRun={run}
         />
       )}
-      renderResults={(result) => <ColBuilderResults result={result} ctx={ctx} ms={task.elapsedMs} onEdit={task.reset} onRestart={onRestart} />}
+      renderResults={(result) => <ColBuilderResults result={result} ctx={ctx} ms={task.elapsedMs} onRestart={onRestart} />}
     />
   );
 }

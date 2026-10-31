@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { estimateEta, formatDuration } from './format.js';
+import { estimateEta, formatBytes, formatDuration } from './format.js';
 
 assert.equal(formatDuration(0), '0 ms');
 assert.equal(formatDuration(16.4), '16 ms');
@@ -16,5 +16,12 @@ assert.equal(estimateEta(0.5, 500), null, 'under 1 s into the step');
 assert.equal(estimateEta(1, 5000), null, 'finished');
 assert.equal(estimateEta(0.5, 4000), 4000, '50% in 4 s → 4 s left');
 assert.equal(estimateEta(0.25, 3000), 9000);
+
+assert.equal(formatBytes(0), '0 B');
+assert.equal(formatBytes(1023), '1023 B');
+assert.equal(formatBytes(1536), '1.5 KB');
+assert.equal(formatBytes(18 * 1024), '18 KB');
+assert.equal(formatBytes(1.2 * 1024 * 1024), '1.2 MB');
+assert.equal(formatBytes(undefined), '0 B');
 
 console.log('format: all checks passed');

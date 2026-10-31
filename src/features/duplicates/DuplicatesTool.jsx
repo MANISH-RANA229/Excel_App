@@ -36,7 +36,7 @@ export default function DuplicatesTool({ datasets, onRestart }) {
       task={task}
       job={{ title: `Looking for duplicates in ${ds.rowCount.toLocaleString()} rows`, stages: STAGES[config.mode], unit: 'rows' }}
       renderConfig={() => <DuplicatesConfig source={source} config={{ ...config, keyColumns }} onChange={setConfig} onRun={run} />}
-      renderResults={(result) => <DuplicatesResults result={result} ctx={ctx} ms={task.elapsedMs} onEdit={task.reset} onRestart={onRestart} />}
+      renderResults={(result) => <DuplicatesResults result={result} ctx={ctx} ms={task.elapsedMs} onRestart={onRestart} />}
     />
   );
 }

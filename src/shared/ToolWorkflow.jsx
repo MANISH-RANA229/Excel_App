@@ -1,6 +1,7 @@
 import PageHeader from '../layout/PageHeader.jsx';
 import ErrorNotice from './ErrorNotice.jsx';
 import JobProgress from './JobProgress.jsx';
+import { useToolPhase } from './ToolPhase.js';
 
 /**
  * The shared lifecycle of every tool: configure → run (loader) → results.
@@ -12,9 +13,10 @@ import JobProgress from './JobProgress.jsx';
  * @param renderResults  (result) => node   (renders its own PageHeader, it needs action buttons)
  */
 export default function ToolWorkflow({ title, subtitle, task, job, renderConfig, renderResults }) {
+  useToolPhase(task.status === 'done' ? 'results' : 'config', task.reset); // the header breadcrumb follows it
   if (task.status === 'done') return renderResults(task.result);
   return (
-    <div className="page">
+    <div className="page page--config">
       <PageHeader title={title} subtitle={subtitle} />
       <ErrorNotice error={task.error} onDismiss={task.reset} />
       {task.status === 'running' ? (

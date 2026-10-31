@@ -2,13 +2,14 @@ import { Button } from 'primereact/button';
 import { Checkbox } from 'primereact/checkbox';
 import { Info, Play } from 'lucide-react';
 import ColumnField from '../../shared/fields/ColumnField.jsx';
+import ConfigSection from '../../shared/fields/ConfigSection.jsx';
 import SourcePicker from '../../shared/fields/SourcePicker.jsx';
 
 export default function SplitConfig({ source, config, column, onChange, onRun }) {
   return (
-    <div className="card config">
-      <div className="config__grid">
-        <div className="span-2"><SourcePicker source={source} /></div>
+    <div className="card config config--form">
+      <ConfigSection title="What to split">
+        <div className="span-2 source-row"><SourcePicker source={source} /></div>
         <ColumnField
           label="Split by column"
           dataset={source.dataset}
@@ -24,7 +25,7 @@ export default function SplitConfig({ source, config, column, onChange, onRun })
           </label>
           <small className="muted">Extra spaces are always ignored. Blank cells go into one “(Blank)” group.</small>
         </div>
-      </div>
+      </ConfigSection>
       <div className="config__foot">
         <p className="hint">
           <Info size={14} aria-hidden="true" />

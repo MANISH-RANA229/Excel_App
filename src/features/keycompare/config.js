@@ -1,7 +1,6 @@
 import { columnIndex } from '../../core/dataset/dataset.js';
+import { KEY_HINT } from '../../core/dataset/keyCandidate.js';
 import { normalizeHeader as headerKey } from '../../core/text/normalize.js';
-
-const KEY_HINT = /(^|\W|_)(id|ref|reference|code|key|no|number|sku|email|invoice|account)(\W|_|$)/i;
 
 /** Columns that exist in both files under the same header (case, spaces and punctuation ignored): [{ name, colA, colB }]. */
 export function sharedColumns(a, b) {
@@ -10,9 +9,14 @@ export function sharedColumns(a, b) {
   return a.columns.filter((c) => byHeader.has(headerKey(c))).map((c) => ({ name: c, colA: c, colB: byHeader.get(headerKey(c)) }));
 }
 
+const idLike = (shared) => shared.find((s) => KEY_HINT.test(s.colA));
+
+/** The shared id-like column Compare by Key would pick on its own (its Excel 1 name), or null. */
+export const suggestKey = (a, b) => idLike(sharedColumns(a, b))?.colA ?? null;
+
 export function defaultConfig(a, b) {
   const shared = sharedColumns(a, b);
-  const pick = shared.find((s) => KEY_HINT.test(s.colA)) ?? shared[0];
+  const pick = idLike(shared) ?? shared[0];
   return {
     keys: [{ a: pick?.colA ?? null, b: pick?.colB ?? null }], // Excel 1 column ↔ Excel 2 column, paired by position
     skipped: [], // shared columns the user unticked (by Excel 1 name)

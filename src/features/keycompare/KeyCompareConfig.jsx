@@ -1,7 +1,8 @@
 import { Button } from 'primereact/button';
 import { Checkbox } from 'primereact/checkbox';
-import { ArrowRight, Play, Plus, X } from 'lucide-react';
+import { ArrowRight, Info, Play, Plus, X } from 'lucide-react';
 import ColumnField from '../../shared/fields/ColumnField.jsx';
+import ConfigSection from '../../shared/fields/ConfigSection.jsx';
 import NumberInput from '../../shared/fields/NumberInput.jsx';
 import { comparedColumns, sharedColumns } from './config.js';
 
@@ -20,48 +21,52 @@ export default function KeyCompareConfig({ datasets: [a, b], config, problem, on
   const toggle = (name, on) => set({ skipped: on ? config.skipped.filter((n) => n !== name) : [...config.skipped, name] });
 
   return (
-    <div className="card config">
-      <div className="config__grid">
-        <div className="field span-2">
-          <span className="config__section-title">Key — rows with the same key are the same record</span>
+    <div className="card config config--form">
+      <ConfigSection title="Key" hint="Rows with the same key are the same record." cols={1}>
+        <div className="key-rows">
           {config.keys.map((k, i) => (
-            <div className="key-row" key={i}>
+            <div className={`key-row${config.keys.length > 1 ? ' has-remove' : ''}`} key={i}>
               <ColumnField label={config.keys.length > 1 ? `Excel 1 (old) · key ${i + 1}` : 'Excel 1 (old)'} dataset={a} value={k.a} onChange={(v) => setKey(i, { a: v })} />
-              <ArrowRight size={14} className="key-row__link" aria-hidden="true" />
+              <ArrowRight size={16} className="key-row__link" aria-hidden="true" />
               <ColumnField label={config.keys.length > 1 ? `Excel 2 (new) · key ${i + 1}` : 'Excel 2 (new)'} dataset={b} value={k.b} onChange={(v) => setKey(i, { b: v })} />
-              {config.keys.length > 1 ? (
-                <Button icon={<X size={14} />} text severity="secondary" size="small" aria-label={`Remove key column ${i + 1}`} onClick={() => set({ keys: config.keys.filter((_, j) => j !== i) })} />
-              ) : <span />}
+              {config.keys.length > 1 && (
+                <Button className="key-row__remove" icon={<X size={14} />} text severity="secondary" size="small" aria-label={`Remove key column ${i + 1}`} onClick={() => set({ keys: config.keys.filter((_, j) => j !== i) })} />
+              )}
             </div>
           ))}
+        </div>
+        <div className="key-add">
           {config.keys.length < MAX_KEYS && (
-            <div><Button label="Add another key column" icon={<Plus size={14} />} text size="small" onClick={() => set({ keys: [...config.keys, { a: null, b: null }] })} /></div>
+            <Button label="Add another key column" icon={<Plus size={14} />} text size="small" className="btn-add" onClick={() => set({ keys: [...config.keys, { a: null, b: null }] })} />
           )}
           <small className="muted">Use more than one column when no single column is unique, e.g. Order no. + Line no.</small>
         </div>
+      </ConfigSection>
 
-        <div className="field span-2">
-          <span>Columns to compare <em>({compared.length} of {selectable.length}, columns with the same name in both files)</em></span>
-          {selectable.length ? (
-            <>
-              <div className="col-picks">
-                {selectable.map((s) => (
-                  <label key={s.name} className="check">
-                    <Checkbox checked={!config.skipped.includes(s.name)} onChange={(e) => toggle(s.name, e.checked)} />
-                    <span>{s.name}</span>
-                  </label>
-                ))}
-              </div>
-              <div>
-                <Button label="All" text size="small" onClick={() => set({ skipped: [] })} />
-                <Button label="None" text size="small" onClick={() => set({ skipped: selectable.map((s) => s.name) })} />
-              </div>
-            </>
-          ) : <small className="muted">The files have no other column with the same name, so only added and removed keys can be found.</small>}
-        </div>
-      </div>
+      <ConfigSection
+        title="Columns to compare"
+        hint={`${compared.length} of ${selectable.length} selected · columns with the same name in both files`}
+        actions={selectable.length > 0 && (
+          <div className="cfg-sec__actions">
+            <Button label="All" text size="small" onClick={() => set({ skipped: [] })} />
+            <Button label="None" text size="small" onClick={() => set({ skipped: selectable.map((s) => s.name) })} />
+          </div>
+        )}
+        cols={1}
+      >
+        {selectable.length ? (
+          <div className="col-picks">
+            {selectable.map((s) => (
+              <label key={s.name} className="check">
+                <Checkbox checked={!config.skipped.includes(s.name)} onChange={(e) => toggle(s.name, e.checked)} />
+                <span>{s.name}</span>
+              </label>
+            ))}
+          </div>
+        ) : <small className="muted">The files have no other column with the same name, so only added and removed keys can be found.</small>}
+      </ConfigSection>
 
-      <div className="config__grid cmp-options">
+      <ConfigSection title="Options" hint="What counts as the same value.">
         <div className="field">
           <span>Keys: ignore when matching</span>
           <label className="check"><Checkbox checked={config.keyNormalize.ignoreCase} onChange={(e) => setKeyNormalize({ ignoreCase: e.checked })} /><span>Upper / lower case</span></label>
@@ -81,10 +86,12 @@ export default function KeyCompareConfig({ datasets: [a, b], config, problem, on
           <span>Download</span>
           <label className="check"><Checkbox checked={config.includeSame} onChange={(e) => set({ includeSame: e.checked })} /><span>Also include the unchanged rows</span></label>
         </div>
-      </div>
+      </ConfigSection>
 
       <div className="config__foot">
-        {problem ? <p className="field-error" role="alert">{problem}</p> : <p className="hint">Excel 1 is treated as the old version and Excel 2 as the new one. Rows without a key are never matched.</p>}
+        {problem
+          ? <p className="field-error" role="alert">{problem}</p>
+          : <p className="hint"><Info size={14} aria-hidden="true" /><span>Excel 1 is treated as the old version and Excel 2 as the new one. Rows without a key are never matched.</span></p>}
         <Button label="Compare" size="small" icon={<Play size={14} />} disabled={!!problem} onClick={onRun} />
       </div>
     </div>

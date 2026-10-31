@@ -51,9 +51,13 @@ Last state: `npm run check` → **41 check files pass**, `npm run build` OK. `np
   **Do not upgrade to 11+ without asking.**
 - **SheetJS `xlsx` 0.20.3** installed from `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` (npm's copy is stale/vulnerable).
   Used only to READ, only inside the read worker (dynamic import). SheetJS CE cannot write cell styles.
-- **Theme**: PrimeReact **Fluent** theme (`fluent-light`), recoloured to Excel green `#217346` by a small Vite plugin in
-  `vite.config.js` (colour map; also maps the orange "secondary" to Office grey). Base font-size 14px for compact density
-  (`html { font-size: 14px }` in `src/styles.css`). Light theme only. Icons: `lucide-react` only (no emoji).
+- **Theme / design system (global, from the user's design board)**: Primary `#107C41`, Secondary `#185C37`, Tertiary `#D1E7DD`, Neutral `#0F172A`
+  (slate greys), font **Inter** (variable, bundled via `@fontsource-variable/inter`, so the app makes no CDN requests). Tokens are the CSS
+  variables at the top of `src/styles.css` (`--xl-green` = Primary, `--xl-green-dark` = Secondary, `--xl-green-soft` = Tertiary, `--text` = Neutral;
+  the old names are kept so tool pages pick the new palette up). PrimeReact **Fluent** theme (`fluent-light`) is recoloured to the same values by
+  the `THEME_COLORS` map in the Vite plugin in `vite.config.js` (accent to green, orange "secondary" to slate, warm greys to slate). Buttons: default =
+  Primary, `severity="secondary" outlined` = the design's neutral "Outlined". Base font-size 14px for compact density
+  (`html { font-size: 14px }`). Light theme only. Icons: `lucide-react` only (no emoji). Product name in the header/title: "Excel Suite" + PRO chip.
 - **No ExcelJS in the app.** ExcelJS's browser build exports only the in-memory `Workbook`; its streaming writer needs Node's
   `archiver`/`fs`, and the in-memory writer needs >1 GB for 500k rows. So export uses a **custom OOXML writer + streaming ZIP
   writer** (section 6). ExcelJS remains a devDependency purely to read files back in checks.
@@ -113,6 +117,9 @@ workers/
 hooks/
   useWorkerTask.js         one job at a time in a Worker: status/progress/elapsedMs/etaMs/result/error/start/cancel/reset
   useGrid.js               filter/sort/page over Int32Array row indexes
+  useHashRoute.js          [routeId, navigate(id,{replace})] from the URL hash (#/diffcheck); no router dependency. App.jsx turns it into the
+                           page via resolveRoute (features/index.js: unknown id or files-not-loaded -> Files, URL corrected in place);
+                           tools stay mounted-but-hidden after the first visit (keep-alive), each tool is its own lazy chunk behind Suspense + ToolSkeleton
 shared/                    React components used by all tools
   JobProgress.jsx (card|inline|dialog variants), JobDialog.jsx, ErrorNotice.jsx, ErrorBoundary.jsx, ToastProvider.jsx (useToast),
   ToolWorkflow.jsx (config -> running -> results shell), ToolSkeleton.jsx, FileDropCard.jsx, DataPreview.jsx, download.js
@@ -120,9 +127,9 @@ shared/                    React components used by all tools
            OptionFields (renders an operation's `fields`: select/text/number/checkbox/pairs + column/columns/conditions; used by Cleaner and Column Builder)
   results/ GridTable, KpiStrip, StatusChips, BandTag, WordBreakdown (HighlightedText, highlightSets), ExportButton,
            ResultGrid (a computed table {rowCount, columns: ColumnSpec[]} as a searchable/sortable grid; Summarize, Combine, Column Builder)
-layout/    AppShell, GlobalHeader, Sidebar (grouped by category, drawer under 900px), PageHeader
-pages/     FilesPage.jsx (two file slots, Swap files, tool cards grouped by category)
-features/  index.js (registry: CATEGORIES, tools, isReady, needsHint), ToolPicker.jsx, diffcheck/, keycompare/, lookup/, reconcile/, duplicates/, cleaner/, split/, summarize/, combine/, colbuilder/
+layout/    AppShell (builds the breadcrumb `crumbs` from the active route + the phase the tool reported), GlobalHeader (brand, breadcrumb, privacy chip) + HeaderSearch (jump-to-tool box, Ctrl/⌘+K), Sidebar (grouped by category, drawer under 900px, badge/hint chips, "Storage: In-Memory" = size of the two loaded files), PageHeader (title, optional badge, subtitle, actions)
+pages/     FilesPage.jsx = home page "Files & Spreadsheets": two big FileDropCards (tag, sheet + header-row bar, preview, "primary key candidate" footer), Swap files / Add file (fills the first free slot via the card's `ref.open()`), ToolPicker, quick pre-processing shortcuts (Duplicate Finder, Data Cleaner)
+features/  index.js (registry: CATEGORIES {title for sidebar, tab for Files page}, tools, isReady, needsHint; optional manifest fields `cta`, `badge`, `recommend(datasets)`), ToolPicker.jsx (category tabs + cards; "Recommended" when `recommend` returns a note), diffcheck/, keycompare/, lookup/, reconcile/, duplicates/, cleaner/, split/, summarize/, combine/, colbuilder/
 App.jsx / main.jsx / styles.css     (main.jsx wraps App in PrimeReactProvider > ToastProvider > ErrorBoundary)
 ```
 Other files: `vite.config.js` (theme colour plugin, worker format es, optimizeDeps include exceljs/jszip/xlsx), `scripts/check.mjs`, `index.html`, `public/favicon.svg`.
@@ -223,10 +230,22 @@ Test approach: pure checks in `src/**/*.check.js` (assert scripts) + real-browse
 - **PrimeReact Dropdown does not forward `ariaLabel` to its inner input:** give it `inputId` + a visually hidden `<label htmlFor>` (class `sr-only`), or wrap it in a `<label>`.
 - **Date display text:** `parseDate`/`formatSerial` are UTC-only; "−0" can appear from `0 - x`-style maths (normalise with `0 - x` or `|| 0`).
 - **Combine / needs: 0 tools** keep their state across changes of Excel 1/2 because App.jsx keys them by a reset counter, not by the dataset key.
+- **Design rules the user set (2026-10-31):** no corner radius above **7px** anywhere (`--radius` and `--radius-lg` are both 7px; chips use 5-6px; only status dots, radio buttons and the slider handle stay round). `styles.css` has no `999px`/`50%` on anything bigger than a dot; a computed-style audit (every element, radius over 7px) was run on all tool screens and came back empty. The page header is compact on purpose (title 1.5rem + one-line subtitle, about 60px tall) because it is on every screen.
+- **Settings-screen building blocks** (reuse them for the next tool): `shared/fields/ConfigSection.jsx` (title, hint, optional `actions`, `cols={1|2}`; give a child `className="span-2"` to span both columns) inside `<div className="card config config--form">` (max 1080px), ending with `<div className="config__foot">` (hint left, primary button right). Labels are the first `span` of `.field`; hints are `<small className="muted">`; checkbox rows are `.check`; `SelectButton` is restyled globally as a segmented control; column pickers are `.col-picks` tiles; text-link add buttons use `className="btn-add"`; rows with an optional remove button add `has-remove` (`.key-row`, `.measure-row`) so no empty column is reserved. Two-file panels use `.config__sides` / `.side` with the `file-tag` chip. Section grids use a 48px column gap so they line up with the two-file panels. `ColumnField` only renders its "e.g. …" line when it has examples. `GridTable` gives each header the same class as its column (numbers right-aligned, checkboxes centred).
+- **Header:** the logo and "Workspace" in the breadcrumb are plain `<a href="#/files">` links (hash routing).
+- **Breadcrumb follows the tool's phase (2026-10-31):** `ToolWorkflow` calls `useToolPhase(phase, task.reset)` (`shared/ToolPhase.js`); `App` provides a `ToolPhaseContext` per mounted tool (`{ id, set }`) and keeps `phases[toolId] = { phase, back }`, `AppShell` reads only the active route's entry. On results the crumb is `Workspace › <tool title> › <manifest resultLabel>` (e.g. `Workspace › Diff Check › Diff result`); config/running stay two levels. The tool-name crumb is a button that calls `back` (= `task.reset`), so there is **no "Settings" button on results pages** any more: that crumb is the way back, and the config state survives (it lives in each tool's own `useState`). The entry is removed on unmount (a tool remounted by a dataset reload never shows a stale "result"). Every manifest needs `resultLabel` (checked in `features/index.check.js`).
+- **Compact config pages:** `ToolWorkflow` renders config/running inside `<div className="page page--config">` (max-width 1080px for every tool, tighter padding/gaps, `.field` gap 4px; the key-row link/remove offsets in Compare by Key are retuned for it, see the end of the "settings card" block in `styles.css`). Results pages (their own `.page`) keep the full width. Phones (≤ 900 / 700 px) keep the roomier rules. At 1366×768 eight of ten config pages fit without a vertical scrollbar (Reconcile and Summarize group mode are long by nature); at 1920×1080 all fit.
+- **Scrollbars:** one global thin scrollbar at the top of `styles.css` (10px track, 6px visible pill; `::-webkit-scrollbar` for Chromium, `scrollbar-width`/`scrollbar-color` only inside `@supports not selector(::-webkit-scrollbar)` for Firefox, because Chromium 121+ ignores the webkit rules once the standard ones are set).
+- **Number stepper:** `.p-inputnumber-buttons-horizontal .p-inputnumber-input { border-radius: 0 }` keeps the centre box square (the global `.p-inputtext` radius is unlayered and beats PrimeReact's layered `border-radius: 0`).
+- **Home tool cards:** icon + title + arrow on one row, description clamped to 3 lines (full text in the button's `title` tooltip), about 162px tall.
+- **React StrictMode (dev only) + one-shot effects:** it mounts, unmounts and remounts once; `useWorkerTask` terminates its worker on unmount, so a read started by a "run once" effect never finished (Combine Files hung on "Reading…" under `npm run dev`, fine in a production build). `FileDropCard`'s `initialFile` effect now resets its `started` guard in its cleanup. Any new run-on-mount worker job needs the same.
+- **PrimeReact AutoComplete** forwards unknown props to its input: use `aria-label`, not `ariaLabel` (React warns). It re-focuses the input after `onSelect`, so blur in a `setTimeout`.
+- **Home page facts that are computed, not mocked:** "Loaded" count, key candidate (`core/dataset/keyCandidate.js`: first column whose cells are all filled and all different, id-like names first), file type/size, storage total, "Recommended" (Compare by Key when both files share an id-like column, `suggestKey`).
 
 ## 12. Working preferences of the user (from this session)
 
 - Wants a **minimal, professional, Excel-green, compact** UI (small controls, sidebar + global header, dense Excel-like tables); first design (airy indigo wizard) was rejected as "too big".
+- **Page-by-page redesign in progress (started 2026-10-31):** the user sends one design image per page; colours and fonts are global (design board above). Done: home page (Files & Spreadsheets) + the shared shell (header, sidebar). Tool pages only inherited the new tokens (palette, Inter, radii, page title); each still waits for its own design. Rule: redesign only, no functionality may change or break. Design elements with no real feature behind them were NOT faked: Auto-save chip, user avatar, "Recent History", cell tags like "92% Match"/"UPPERCASE", "Encoding" (the footer shows file type + size instead); the "Add File / Sheet" button is "Add file" and is disabled when both slots are full.
 - Wants **senior-level architecture, reusable components, no throwaway code**, nothing already working may break (regression-checked), proper loaders with elapsed/ETA, proper error handling, optimised JS-only logic.
 - Wants questions asked once for flow corrections, then action. Prefers real verification and honest reporting of what was and was not tested.
 - A "ponytail" (laziest-solution) style hook was active in the session; the user explicitly asked for quality/architecture over minimal code for this project.

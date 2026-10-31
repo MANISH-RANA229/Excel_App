@@ -27,7 +27,7 @@ export default function KeyCompareTool({ datasets, onRestart }) {
       task={task}
       job={{ title: `Comparing ${a.rowCount.toLocaleString()} and ${b.rowCount.toLocaleString()} rows`, stages: STAGES, unit: 'rows' }}
       renderConfig={() => <KeyCompareConfig datasets={datasets} config={config} problem={problem} onChange={setConfig} onRun={run} />}
-      renderResults={(result) => <KeyCompareResults result={result} ctx={ctx} ms={task.elapsedMs} onEdit={task.reset} onRestart={onRestart} />}
+      renderResults={(result) => <KeyCompareResults result={result} ctx={ctx} ms={task.elapsedMs} onRestart={onRestart} />}
     />
   );
 }

@@ -1,5 +1,5 @@
 import { Button } from 'primereact/button';
-import { RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { formatDuration } from '../../core/format.js';
 import ExportButton from '../../shared/results/ExportButton.jsx';
@@ -10,7 +10,7 @@ import { buildSummarizeExport } from './exportSpec.js';
 
 const TITLES = { group: 'Summary', unpivot: 'Columns turned into rows', transpose: 'Rows and columns swapped' };
 
-export default function SummarizeResults({ result, ctx, ms, onEdit, onRestart }) {
+export default function SummarizeResults({ result, ctx, ms, onRestart }) {
   const { ds, config } = ctx;
   const { table, stats, mode } = result;
   const n = (v) => v.toLocaleString();
@@ -32,7 +32,6 @@ export default function SummarizeResults({ result, ctx, ms, onEdit, onRestart })
         subtitle={`${ds.fileName} · ${ds.sheet} · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Settings" size="small" outlined severity="secondary" icon={<SlidersHorizontal size={14} />} onClick={onEdit} />
             <Button label="Start again" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton label="Download Excel" buildSpec={() => buildSummarizeExport(result, { ds, description: describeConfig(config) })} />
           </>

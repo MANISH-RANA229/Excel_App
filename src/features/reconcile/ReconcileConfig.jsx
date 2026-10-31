@@ -2,8 +2,9 @@ import { Button } from 'primereact/button';
 import { Checkbox } from 'primereact/checkbox';
 import { Dropdown } from 'primereact/dropdown';
 import { SelectButton } from 'primereact/selectbutton';
-import { Play } from 'lucide-react';
+import { FileSpreadsheet, Info, Play } from 'lucide-react';
 import ColumnField from '../../shared/fields/ColumnField.jsx';
+import ConfigSection from '../../shared/fields/ConfigSection.jsx';
 import NumberInput from '../../shared/fields/NumberInput.jsx';
 import ThresholdField from '../../shared/fields/ThresholdField.jsx';
 
@@ -11,12 +12,12 @@ const AMOUNT_KINDS = [{ label: 'One amount column', value: 'single' }, { label: 
 const MODES = [{ label: 'Line by line', value: 'line' }, { label: 'Total per reference', value: 'sum' }];
 const DECIMALS = [{ label: 'Dot  (1,234.50)', value: '.' }, { label: 'Comma  (1.234,50)', value: ',' }];
 
-function SideConfig({ label, dataset, cfg, onChange }) {
+function SideConfig({ label, accent, dataset, cfg, onChange }) {
   const set = (patch) => onChange({ ...cfg, ...patch });
   return (
     <div className="side">
       <div className="side__head">
-        <span className="card__label">{label}</span>
+        <span className={`file-tag${accent === 'b' ? ' file-tag--b' : ''}`}><FileSpreadsheet size={14} aria-hidden="true" />{label}</span>
         <span className="muted clip" title={dataset.fileName}>{dataset.fileName} · {dataset.sheet}</span>
       </div>
       <ColumnField label="Reference column (invoice no., UTR …)" dataset={dataset} value={cfg.key} onChange={(key) => set({ key })} clearable placeholder="Optional" />
@@ -42,13 +43,13 @@ export default function ReconcileConfig({ datasets: [a, b], config, problem, onC
   const bothDates = config.a.date && config.b.date;
   const line = config.mode === 'line';
   return (
-    <div className="card config">
+    <div className="card config config--form">
       <div className="config__sides">
         <SideConfig label="Excel 1" dataset={a} cfg={config.a} onChange={(cfg) => set({ a: cfg })} />
-        <SideConfig label="Excel 2" dataset={b} cfg={config.b} onChange={(cfg) => set({ b: cfg })} />
+        <SideConfig label="Excel 2" accent="b" dataset={b} cfg={config.b} onChange={(cfg) => set({ b: cfg })} />
       </div>
 
-      <div className="config__grid recon-options">
+      <ConfigSection title="How to match" hint="How rows of the two files are paired and when amounts count as equal.">
         <div className="field">
           <span>Compare</span>
           <SelectButton value={config.mode} options={MODES} onChange={(e) => e.value && set({ mode: e.value })} allowEmpty={false} />
@@ -73,20 +74,23 @@ export default function ReconcileConfig({ datasets: [a, b], config, problem, onC
             <label className="check"><Checkbox checked={config.dayFirst} onChange={(e) => set({ dayFirst: e.checked })} /><span>Read 05/03/2026 as 5 March (day first)</span></label>
           </div>
         )}
-        {line && (
-          <>
-            <div className="field">
-              <span>Also try</span>
-              <label className="check"><Checkbox checked={config.amountOnly} onChange={(e) => set({ amountOnly: e.checked })} /><span>Matching on amount{bothDates ? ' and date' : ''} alone (marked “Probable”)</span></label>
-              <label className="check"><Checkbox checked={config.fuzzyKey} onChange={(e) => set({ fuzzyKey: e.checked })} /><span>Similar references (typos, word order)</span></label>
-            </div>
-            {config.fuzzyKey && <ThresholdField label="Minimum reference similarity" value={config.fuzzyThreshold} min={60} max={99} onChange={(fuzzyThreshold) => set({ fuzzyThreshold })} />}
-          </>
-        )}
-      </div>
+      </ConfigSection>
+
+      {line && (
+        <ConfigSection title="Extra passes" hint="Looser matches tried after the exact ones. They are marked so you can review them.">
+          <div className="field">
+            <span>Also try</span>
+            <label className="check"><Checkbox checked={config.amountOnly} onChange={(e) => set({ amountOnly: e.checked })} /><span>Matching on amount{bothDates ? ' and date' : ''} alone (marked “Probable”)</span></label>
+            <label className="check"><Checkbox checked={config.fuzzyKey} onChange={(e) => set({ fuzzyKey: e.checked })} /><span>Similar references (typos, word order)</span></label>
+          </div>
+          {config.fuzzyKey && <ThresholdField label="Minimum reference similarity" value={config.fuzzyThreshold} min={60} max={99} onChange={(fuzzyThreshold) => set({ fuzzyThreshold })} />}
+        </ConfigSection>
+      )}
 
       <div className="config__foot">
-        {problem ? <p className="field-error" role="alert">{problem}</p> : <p className="hint">Rows are matched in order of confidence: same reference and amount first, then same reference with a different amount, and so on.</p>}
+        {problem
+          ? <p className="field-error" role="alert">{problem}</p>
+          : <p className="hint"><Info size={14} aria-hidden="true" /><span>Rows are matched in order of confidence: same reference and amount first, then same reference with a different amount, and so on.</span></p>}
         <Button label="Reconcile" size="small" icon={<Play size={14} />} disabled={!!problem} onClick={onRun} />
       </div>
     </div>

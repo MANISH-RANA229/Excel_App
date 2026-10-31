@@ -37,7 +37,7 @@ export default function DiffCheck({ datasets, onRestart }) {
       task={task}
       job={{ title: `Comparing ${a.rowCount.toLocaleString()} × ${b.rowCount.toLocaleString()} rows`, stages: STAGES, unit: 'rows' }}
       renderConfig={() => <DiffConfig datasets={datasets} config={config} onChange={setConfig} onRun={start} />}
-      renderResults={(result) => <ResultsView result={result} ms={task.elapsedMs} ctx={ctx} onEdit={task.reset} onRestart={onRestart} />}
+      renderResults={(result) => <ResultsView result={result} ms={task.elapsedMs} ctx={ctx} onRestart={onRestart} />}
     />
   );
 }

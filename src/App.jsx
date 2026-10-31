@@ -1,36 +1,42 @@
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { FolderOpen } from 'lucide-react';
 import AppShell from './layout/AppShell.jsx';
 import FilesPage from './pages/FilesPage.jsx';
 import ErrorBoundary from './shared/ErrorBoundary.jsx';
 import ToolSkeleton from './shared/ToolSkeleton.jsx';
-import { CATEGORIES, isReady, needsHint, tools } from './features/index.js';
+import { ToolPhaseContext } from './shared/ToolPhase.js';
+import useHashRoute from './hooks/useHashRoute.js';
+import { CATEGORIES, isReady, needsHint, resolveRoute, tools } from './features/index.js';
 
 export default function App() {
   const [files, setFiles] = useState([null, null]); // { file, sheetNames, dims, warnings, dataset } — see FileDropCard
-  const [route, setRoute] = useState('files');
+  const [urlRoute, navigate] = useHashRoute();
   const [visited, setVisited] = useState({}); // tool id → data key it was opened with
   const [resetCount, setResetCount] = useState(0); // bumps on "Clear workspace"
+  const [phases, setPhases] = useState({}); // tool id → { phase: 'config' | 'results', back } reported by ToolWorkflow, for the breadcrumb
 
   const datasets = useMemo(() => files.map((f) => f?.dataset ?? null), [files]);
   const loaded = datasets.map((d) => !!d?.rowCount);
+  const route = resolveRoute(urlRoute, loaded);
+  // A typed or stale URL (unknown tool, files not loaded) is corrected in place so Back doesn't bounce into it.
+  useEffect(() => { if (route !== urlRoute) navigate(route, { replace: true }); }, [route, urlRoute, navigate]);
+
   // Tools mount on first visit and stay mounted (results survive navigation); they reset when any dataset is re-loaded.
   const dataKey = datasets.map((d) => d?.id ?? '').join('/');
   // Tools that load their own files (needs: 0) must not reset when Excel 1 / Excel 2 change, only on "Clear workspace".
   const keyOf = (t) => (t.needs === 0 ? `reset${resetCount}` : dataKey);
-  const mounted = tools.filter((t) => visited[t.id] === keyOf(t) && isReady(t, loaded));
-
-  const navigate = (id) => {
-    setRoute(id);
-    if (id !== 'files') setVisited((v) => ({ ...v, [id]: keyOf(tools.find((t) => t.id === id)) }));
-  };
+  const activeKey = route === 'files' ? null : keyOf(tools.find((t) => t.id === route));
+  useEffect(() => {
+    if (activeKey !== null) setVisited((v) => (v[route] === activeKey ? v : { ...v, [route]: activeKey }));
+  }, [route, activeKey]);
+  const mounted = tools.filter((t) => isReady(t, loaded) && (t.id === route || visited[t.id] === keyOf(t)));
 
   const nav = [
-    { title: 'Workspace', items: [{ id: 'files', label: 'Files', icon: FolderOpen, hint: `${files.filter(Boolean).length}/2` }] },
+    { title: 'Workspace', items: [{ id: 'files', label: 'Files', crumb: 'Files & Operations', icon: FolderOpen, hint: `${files.filter(Boolean).length}/2` }] },
     ...CATEGORIES.map(({ id, title }) => ({
       title,
       items: tools.filter((t) => t.category === id).map((t) => ({
-        id: t.id, label: t.title, icon: t.icon, disabled: !isReady(t, loaded), disabledReason: needsHint(t),
+        id: t.id, label: t.title, resultLabel: t.resultLabel, icon: t.icon, badge: t.badge, disabled: !isReady(t, loaded), disabledReason: needsHint(t),
       })),
     })).filter((g) => g.items.length),
   ];
@@ -38,19 +44,21 @@ export default function App() {
   function clear() {
     setFiles([null, null]);
     setResetCount((n) => n + 1);
-    setRoute('files');
+    navigate('files');
   }
 
   return (
-    <AppShell nav={nav} active={route} onNavigate={navigate} onClear={clear}>
-      {route === 'files' && <FilesPage files={files} onFiles={setFiles} loaded={loaded} onOpenTool={navigate} />}
+    <AppShell nav={nav} active={route} phase={phases[route]} storage={files.reduce((n, f) => n + (f?.file.size ?? 0), 0)} onNavigate={navigate} onClear={clear}>
+      {route === 'files' && <FilesPage files={files} onFiles={setFiles} datasets={datasets} loaded={loaded} onOpenTool={navigate} />}
       {mounted.map((t) => {
         const { id, title, Component } = t;
         return (
           <div key={id + keyOf(t)} hidden={route !== id}>
             <ErrorBoundary label={title} retryLabel="Reload tool">
               <Suspense fallback={<ToolSkeleton title={title} />}>
-                <Component datasets={datasets} onRestart={clear} />
+                <ToolPhaseContext.Provider value={{ id, set: setPhases }}>
+                  <Component datasets={datasets} onRestart={clear} />
+                </ToolPhaseContext.Provider>
               </Suspense>
             </ErrorBoundary>
           </div>

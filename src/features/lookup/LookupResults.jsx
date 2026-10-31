@@ -3,7 +3,7 @@ import { Button } from 'primereact/button';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
-import { RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
+import { RotateCcw, Search, X } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { columnIndex, columnTexts } from '../../core/dataset/dataset.js';
 import { formatDuration } from '../../core/format.js';
@@ -18,7 +18,7 @@ import { NOT_FOUND } from './engine.js';
 import { buildLookupExport } from './exportSpec.js';
 import { STATUSES } from './status.js';
 
-export default function LookupResults({ result, ctx, ms, onEdit, onRestart }) {
+export default function LookupResults({ result, ctx, ms, onRestart }) {
   const { a, b, keyA, keyB, pull, threshold } = ctx;
   const [status, setStatus] = useState(null); // status code or null
   const [search, setSearch] = useState('');
@@ -92,7 +92,6 @@ export default function LookupResults({ result, ctx, ms, onEdit, onRestart }) {
         subtitle={`“${keyA}” → “${keyB}” · at least ${threshold}% · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Settings" size="small" outlined severity="secondary" icon={<SlidersHorizontal size={14} />} onClick={onEdit} />
             <Button label="New lookup" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton label="Download merged file" buildSpec={() => buildLookupExport(result, ctx)} />
           </>

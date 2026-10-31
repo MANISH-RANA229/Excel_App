@@ -16,7 +16,7 @@ export default function ColumnField({ label, dataset, value, onChange, samples =
         filter
         className={`w-full${error ? ' p-invalid' : ''}`}
       />
-      {samples && <p className="samples clip" title={examples.join(', ')}>{examples.length ? `e.g. ${examples.join(' · ')}` : ' '}</p>}
+      {examples.length > 0 && <p className="samples clip" title={examples.join(', ')}>e.g. {examples.join(' · ')}</p>}
       {hint && <small className="muted">{hint}</small>}
       {error && <small className="field-error" role="alert">{error}</small>}
     </label>

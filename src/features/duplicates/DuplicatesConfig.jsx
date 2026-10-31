@@ -4,6 +4,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { SelectButton } from 'primereact/selectbutton';
 import { Info, Play } from 'lucide-react';
 import ColumnMultiField from '../../shared/fields/ColumnMultiField.jsx';
+import ConfigSection from '../../shared/fields/ConfigSection.jsx';
 import SourcePicker from '../../shared/fields/SourcePicker.jsx';
 import ThresholdField from '../../shared/fields/ThresholdField.jsx';
 import { KEEP_RULES } from './engine.js';
@@ -18,9 +19,9 @@ export default function DuplicatesConfig({ source, config, onChange, onRun }) {
   const n = source.dataset.rowCount;
 
   return (
-    <div className="card config">
-      <div className="config__grid">
-        <div className="span-2"><SourcePicker source={source} /></div>
+    <div className="card config config--form">
+      <ConfigSection title="What to check">
+        <SourcePicker source={source} />
         <div className="span-2">
           <ColumnMultiField
             label="Columns that identify a duplicate"
@@ -31,10 +32,19 @@ export default function DuplicatesConfig({ source, config, onChange, onRun }) {
             hint="Rows are duplicates when ALL of these columns match."
           />
         </div>
+      </ConfigSection>
 
-        <div className="field">
-          <span>How to compare</span>
-          <SelectButton value={config.mode} options={MODES} onChange={(e) => e.value && set({ mode: e.value })} allowEmpty={false} />
+      <ConfigSection title="How to compare">
+        <div className="stack">
+          <div className="field">
+            <span>Matching</span>
+            <SelectButton value={config.mode} options={MODES} onChange={(e) => e.value && set({ mode: e.value })} allowEmpty={false} />
+          </div>
+          <label className="field">
+            <span>Which row to keep in each group</span>
+            <Dropdown value={config.keep} options={KEEP_OPTIONS} onChange={(e) => set({ keep: e.value })} className="w-full" />
+            <small className="muted">You can change this for any group while reviewing.</small>
+          </label>
         </div>
         {config.mode === 'similar' ? (
           <ThresholdField
@@ -53,13 +63,7 @@ export default function DuplicatesConfig({ source, config, onChange, onRun }) {
             <label className="check"><Checkbox checked={config.normalize.ignorePunctuation} onChange={(e) => setNormalize({ ignorePunctuation: e.checked })} /><span>Punctuation (dots, commas, dashes)</span></label>
           </div>
         )}
-
-        <label className="field">
-          <span>Which row to keep in each group</span>
-          <Dropdown value={config.keep} options={KEEP_OPTIONS} onChange={(e) => set({ keep: e.value })} className="w-full" />
-          <small className="muted">You can change this for any group while reviewing.</small>
-        </label>
-      </div>
+      </ConfigSection>
 
       <div className="config__foot">
         <p className="hint">
