@@ -1,5 +1,4 @@
-import { Button } from 'primereact/button';
-import { InputText } from 'primereact/inputtext';
+import { Button, InputText } from '../../components/ui/index.js';
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
 import { OPS } from '../../core/columns/operations.js';
 import OptionFields from '../../shared/fields/OptionFields.jsx';
@@ -16,9 +15,9 @@ export default function BuilderStepCard({ step, index, count, available, finalNa
           <p className="muted">{op.description}</p>
         </div>
         <div className="step__actions">
-          <Button icon={<ArrowUp size={14} />} text rounded size="small" severity="secondary" aria-label="Move step up" disabled={index === 0} onClick={() => onMove(-1)} />
-          <Button icon={<ArrowDown size={14} />} text rounded size="small" severity="secondary" aria-label="Move step down" disabled={index === count - 1} onClick={() => onMove(1)} />
-          <Button icon={<X size={14} />} text rounded size="small" severity="secondary" aria-label="Remove step" onClick={onRemove} />
+          <Button icon={<ArrowUp size={14} />} text rounded size="sm" severity="secondary" aria-label="Move step up" disabled={index === 0} onClick={() => onMove(-1)} />
+          <Button icon={<ArrowDown size={14} />} text rounded size="sm" severity="secondary" aria-label="Move step down" disabled={index === count - 1} onClick={() => onMove(1)} />
+          <Button icon={<X size={14} />} text rounded size="sm" severity="secondary" aria-label="Remove step" onClick={onRemove} />
         </div>
       </div>
       <div className="step__body">

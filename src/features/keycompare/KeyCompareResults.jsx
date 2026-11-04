@@ -1,8 +1,7 @@
 import { useDeferredValue, useMemo, useState } from 'react';
-import { Button } from 'primereact/button';
+import { Button, InputText } from '../../components/ui/index.js';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
-import { InputText } from 'primereact/inputtext';
 import { RotateCcw, Search, X } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { columnTexts } from '../../core/dataset/dataset.js';
@@ -28,78 +27,116 @@ const CellChange = ({ name, from, to }) => (
 );
 
 export default function KeyCompareResults({ result, ctx, ms, onRestart }) {
-  const { a, b, config, compared } = ctx;
+  const { a, b, config = { keys: [], values: {} }, compared = [] } = ctx || {};
+  const t = result?.totals || ctx?.totals || { rowsA: 0, rowsB: 0, same: 0, changed: 0, added: 0, removed: 0, noKeyA: 0, noKeyB: 0, duplicateKeys: 0 };
   const [status, setStatus] = useState(null);
   const [search, setSearch] = useState('');
   const query = useDeferredValue(search.trim().toLowerCase());
-  const t = result.totals;
-  const pairs = useMemo(() => pairsOf(compared, a, b), [compared, a, b]);
-  const equal = useMemo(() => makeEqual({ ...config.values, tolerance: config.tolerance }), [config]);
-  const keysA = config.keys.map((k) => columnTexts(a, k.a));
-  const keysB = config.keys.map((k) => columnTexts(b, k.b));
 
-  const keyOf = (i) => (result.rowA[i] >= 0 ? keysA.map((c) => c[result.rowA[i]]) : keysB.map((c) => c[result.rowB[i]])).join(' · ');
-  const changesOf = (i) => changedColumns(pairs, equal, result.rowA[i], result.rowB[i]);
-  const accept = (i) => (status == null || result.status[i] === status) && (!query || keyOf(i).toLowerCase().includes(query));
-  const getRow = (i) => {
+  const keyColsA = useMemo(() => (a?.columns ? (config.keys || []).map((k) => a.columns.indexOf(k.a)) : []), [config.keys, a]);
+  const keyColsB = useMemo(() => (b?.columns ? (config.keys || []).map((k) => b.columns.indexOf(k.b)) : []), [config.keys, b]);
+  const pairs = useMemo(() => (a && b ? pairsOf(compared, a, b) : []), [compared, a, b]);
+  const eq = useMemo(() => makeEqual(config.values, config.tolerance), [config.values, config.tolerance]);
+
+  const keyText = (i) => {
+    if (!result?.rowA || !result?.rowB) return '';
     const ra = result.rowA[i];
     const rb = result.rowB[i];
-    const changes = result.status[i] === CHANGED ? changesOf(i) : [];
+    const cols = ra >= 0 ? keyColsA : keyColsB;
+    const ds = ra >= 0 ? a : b;
+    const row = ra >= 0 ? ra : rb;
+    if (!ds || !ds.text) return '';
+    return cols.map((c) => ds.text[c]?.[row] ?? '').join(' · ');
+  };
+
+  const accept = (i) => (status == null || result?.status?.[i] === status) && (!query || keyText(i).toLowerCase().includes(query));
+
+  // Only the visible rows ever compute which cells changed.
+  const getRow = (i) => {
+    const st = result?.status?.[i] ?? SAME;
+    const ra = result?.rowA?.[i] ?? -1;
+    const rb = result?.rowB?.[i] ?? -1;
+    const changes = st === CHANGED && a && b ? changedColumns(pairs, a, b, ra, rb, eq) : [];
     return {
-      i, status: result.status[i], key: keyOf(i), aRow: ra >= 0 ? a.rowNums[ra] : null, bRow: rb >= 0 ? b.rowNums[rb] : null,
-      count: result.changedCount[i],
-      shown: changes.slice(0, SHOWN_CHANGES).map((p) => ({ name: pairs[p].name, from: pairs[p].a.text[ra], to: pairs[p].b.text[rb] })),
-      more: Math.max(0, changes.length - SHOWN_CHANGES),
+      index: i,
+      status: st,
+      key: keyText(i),
+      rowA: ra >= 0 ? (a?.rowNums?.[ra] ?? ra + 1) : null,
+      rowB: rb >= 0 ? (b?.rowNums?.[rb] ?? rb + 1) : null,
+      ra,
+      rb,
+      changes,
     };
   };
 
   const columns = [
-    { expander: true, className: 'col-expander' },
-    { field: 'status', header: 'Status', sortable: true, className: 'col-status', body: (r) => { const s = STATUSES[r.status]; return <span className="band-tag" style={{ background: s.bg, color: s.fg }}><strong>{s.label}</strong></span>; } },
-    { field: 'key', header: 'Key', sortable: true, body: (r) => <span className="cell" title={r.key}>{r.key || <span className="muted">(no key)</span>}</span> },
-    { field: 'aRow', header: 'Excel 1 row', sortable: true, className: 'rownum', body: (r) => r.aRow ?? '—' },
-    { field: 'bRow', header: 'Excel 2 row', sortable: true, className: 'rownum', body: (r) => r.bRow ?? '—' },
-    { field: 'count', header: 'Changed cells', sortable: true, className: 'rownum', body: (r) => (r.status === CHANGED ? r.count : '') },
+    { field: 'key', header: 'Key', sortable: true, body: (r) => <span className="clip" title={r.key}><strong>{r.key || <span className="muted">(blank key)</span>}</strong></span> },
     {
-      field: 'shown', header: 'What changed',
-      body: (r) => (r.shown.length ? <span className="cell">{r.shown.map((c) => <CellChange key={c.name} {...c} />)}{r.more > 0 && <span className="muted">+{r.more} more</span>}</span> : null),
+      field: 'status', header: 'Status', sortable: true, className: 'col-status', style: { width: '1%' },
+      body: (r) => {
+        const meta = STATUSES[r.status] || { color: { bg: '#eee', fg: '#333' }, label: 'Unknown' };
+        return <span className="band-tag" style={{ background: meta.color.bg, color: meta.color.fg }}>{meta.label}</span>;
+      },
+    },
+    { field: 'rowA', header: 'Excel 1 row', sortable: true, style: { width: '1%' }, className: 'rownum', body: (r) => r.rowA ?? '—' },
+    { field: 'rowB', header: 'Excel 2 row', sortable: true, style: { width: '1%' }, className: 'rownum', body: (r) => r.rowB ?? '—' },
+    {
+      field: 'changes', header: 'Changed values',
+      body: (r) => {
+        if (r.status === SAME) return <span className="muted">All compared values match</span>;
+        if (r.status === ADDED) return <span className="muted">New in Excel 2</span>;
+        if (r.status === REMOVED) return <span className="muted">Removed from Excel 2</span>;
+        const shown = r.changes.slice(0, SHOWN_CHANGES);
+        return (
+          <span>
+            {shown.map((c) => <CellChange key={c.name} name={c.name} from={c.from} to={c.to} />)}
+            {r.changes.length > SHOWN_CHANGES && <span className="muted">+ {r.changes.length - SHOWN_CHANGES} more</span>}
+          </span>
+        );
+      },
     },
   ];
+
   const sorters = {
-    status: (i) => result.status[i], key: (i) => keyOf(i).toLowerCase(),
-    aRow: (i) => (result.rowA[i] >= 0 ? a.rowNums[result.rowA[i]] : 2 ** 31), bRow: (i) => (result.rowB[i] >= 0 ? b.rowNums[result.rowB[i]] : 2 ** 31),
-    count: (i) => result.changedCount[i],
+    key: (i) => keyText(i).toLowerCase(),
+    status: (i) => result?.status?.[i] ?? 0,
+    rowA: (i) => (result?.rowA && result.rowA[i] >= 0 ? (a?.rowNums?.[result.rowA[i]] ?? result.rowA[i]) : Infinity),
+    rowB: (i) => (result?.rowB && result.rowB[i] >= 0 ? (b?.rowNums?.[result.rowB[i]] ?? result.rowB[i]) : Infinity),
   };
 
   const expansion = (r) => {
     if (r.status === CHANGED) {
-      const ra = result.rowA[r.i];
-      const rb = result.rowB[r.i];
       return (
         <div className="wd">
           <table className="members">
             <thead><tr><th>Column</th><th>Excel 1 (old)</th><th>Excel 2 (new)</th></tr></thead>
             <tbody>
-              {changesOf(r.i).map((p) => (
-                <tr key={pairs[p].name}><td>{pairs[p].name}</td><td><span className="chg__old"><Value text={pairs[p].a.text[ra]} /></span></td><td><span className="chg__new"><Value text={pairs[p].b.text[rb]} /></span></td></tr>
+              {r.changes.map((c) => (
+                <tr key={c.name}>
+                  <td><strong>{c.name}</strong></td>
+                  <td><span className="chg__old"><Value text={c.from} /></span></td>
+                  <td><span className="chg__new"><Value text={c.to} /></span></td>
+                </tr>
               ))}
             </tbody>
           </table>
         </div>
       );
     }
-    if (r.status === SAME) return <div className="wd"><span className="muted">{pairs.length ? `All ${pairs.length} compared columns are equal.` : 'Only the key was compared.'}</span></div>;
-    const ds = r.status === ADDED ? b : a;
-    const row = r.status === ADDED ? result.rowB[r.i] : result.rowA[r.i];
+    const isA = r.status === REMOVED;
+    const ds = isA ? a : b;
+    const row = isA ? r.ra : r.rb;
+    if (!ds) return null;
+    const rowCells = columnTexts(ds, row);
     return (
       <div className="wd">
         <table className="members">
-          <thead><tr><th>Column</th><th>{r.status === ADDED ? 'Excel 2 (new)' : 'Excel 1 (old)'}</th></tr></thead>
+          <thead><tr>{(ds.columns || []).slice(0, SHOWN_COLUMNS).map((c) => <th key={c}>{c}</th>)}</tr></thead>
           <tbody>
-            {ds.columns.slice(0, SHOWN_COLUMNS).map((c, k) => <tr key={c}><td>{c}</td><td>{ds.text[k][row]}</td></tr>)}
+            <tr>{rowCells.slice(0, SHOWN_COLUMNS).map((c, i) => <td key={i}><span className="cell clip" title={c}>{c || <span className="muted">(blank)</span>}</span></td>)}</tr>
           </tbody>
         </table>
-        {ds.columns.length > SHOWN_COLUMNS && <span className="muted">… and {ds.columns.length - SHOWN_COLUMNS} more columns</span>}
+        {(ds.columns || []).length > SHOWN_COLUMNS && <span className="muted">… and {ds.columns.length - SHOWN_COLUMNS} more columns</span>}
       </div>
     );
   };
@@ -108,9 +145,9 @@ export default function KeyCompareResults({ result, ctx, ms, onRestart }) {
     <div className="toolbar">
       <IconField iconPosition="left" className="toolbar__search">
         <InputIcon><Search size={14} /></InputIcon>
-        <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search key" aria-label="Search key" className="p-inputtext-sm w-full" />
+        <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search key" aria-label="Search key" size="sm" className="w-full" />
       </IconField>
-      {status != null && (
+      {status != null && STATUSES[status] && (
         <button type="button" className="filter-chip" onClick={() => setStatus(null)}>
           {STATUSES[status].label} <X size={12} aria-label="Clear filter" />
         </button>
@@ -119,15 +156,18 @@ export default function KeyCompareResults({ result, ctx, ms, onRestart }) {
     </div>
   );
 
-  const n = (v) => v.toLocaleString();
+  const n = (v) => (v ?? 0).toLocaleString();
+  const nameA = a?.fileName ?? 'Excel 1';
+  const nameB = b?.fileName ?? 'Excel 2';
+
   return (
     <div className="page">
       <PageHeader
         title="Comparison results"
-        subtitle={`${a.fileName} (old) ↔ ${b.fileName} (new) · ${formatDuration(ms)}`}
+        subtitle={`${nameA} (old) ↔ ${nameB} (new) · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="New comparison" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
+            <Button label="New comparison" size="sm" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton label="Download report" buildSpec={() => buildKeyCompareExport(result, { a, b, config, compared, description: describeConfig(config, compared) })} />
           </>
         )}
@@ -141,17 +181,17 @@ export default function KeyCompareResults({ result, ctx, ms, onRestart }) {
             active={status}
             onSelect={setStatus}
             items={[
-              { key: CHANGED, count: t.changed }, { key: ADDED, count: t.added }, { key: REMOVED, count: t.removed }, { key: SAME, count: t.same },
+              { key: CHANGED, count: t.changed ?? 0 }, { key: ADDED, count: t.added ?? 0 }, { key: REMOVED, count: t.removed ?? 0 }, { key: SAME, count: t.same ?? 0 },
             ].map((x) => ({ ...x, label: STATUSES[x.key].label, color: STATUSES[x.key].color }))}
           />
-          {(t.noKeyA > 0 || t.noKeyB > 0) && <small className="muted">Rows with no key cannot be matched (Excel 1: {n(t.noKeyA)} · Excel 2: {n(t.noKeyB)}).</small>}
-          {t.duplicateKeys > 0 && <small className="muted">{n(t.duplicateKeys)} key{t.duplicateKeys === 1 ? ' appears' : 's appear'} more than once; repeated keys are paired in order (1st with 1st, 2nd with 2nd).</small>}
+          {((t.noKeyA ?? 0) > 0 || (t.noKeyB ?? 0) > 0) && <small className="muted">Rows with no key cannot be matched (Excel 1: {n(t.noKeyA)} · Excel 2: {n(t.noKeyB)}).</small>}
+          {(t.duplicateKeys ?? 0) > 0 && <small className="muted">{n(t.duplicateKeys)} key{t.duplicateKeys === 1 ? ' appears' : 's appear'} more than once; repeated keys are paired in order (1st with 1st, 2nd with 2nd).</small>}
         </div>
       </div>
 
       <div className="card table-card">
         <GridTable
-          count={result.n}
+          count={result?.n ?? 0}
           getRow={getRow}
           columns={columns}
           accept={accept}

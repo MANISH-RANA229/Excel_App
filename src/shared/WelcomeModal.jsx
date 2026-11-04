@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Dialog } from 'primereact/dialog';
-import { Button } from 'primereact/button';
+import { Button } from '../components/ui/index.js';
 import { CloudOff, FileCheck, Laptop, Lock, SaveOff, Search, UserX } from 'lucide-react';
 import { WELCOME } from '../pages/info/content.js';
 import { dismissWelcome } from './welcomeSeen.js';

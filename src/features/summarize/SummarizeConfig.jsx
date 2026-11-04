@@ -1,8 +1,4 @@
-import { Button } from 'primereact/button';
-import { Checkbox } from 'primereact/checkbox';
-import { Dropdown } from 'primereact/dropdown';
-import { InputText } from 'primereact/inputtext';
-import { SelectButton } from 'primereact/selectbutton';
+import { Button, Checkbox, Dropdown, InputText, SelectButton } from '../../components/ui/index.js';
 import { Info, Play, Plus, X } from 'lucide-react';
 import ColumnField from '../../shared/fields/ColumnField.jsx';
 import ColumnMultiField from '../../shared/fields/ColumnMultiField.jsx';
@@ -34,14 +30,14 @@ function Measures({ ds, config, set }) {
                 </label>
               ) : <span />}
               {config.measures.length > 1 && (
-                <Button icon={<X size={14} />} text severity="secondary" size="small" aria-label={`Remove calculation ${i + 1}`} onClick={() => set({ measures: config.measures.filter((_, j) => j !== i) })} />
+                <Button icon={<X size={14} />} text severity="secondary" size="sm" aria-label={`Remove calculation ${i + 1}`} onClick={() => set({ measures: config.measures.filter((_, j) => j !== i) })} />
               )}
             </div>
           );
         })}
       </div>
       {config.measures.length < MAX_MEASURES && (
-        <Button label="Add another calculation" icon={<Plus size={14} />} text size="small" className="btn-add" onClick={() => set({ measures: [...config.measures, { agg: 'sum', column: null }] })} />
+        <Button label="Add another calculation" icon={<Plus size={14} />} text size="sm" className="btn-add" onClick={() => set({ measures: [...config.measures, { agg: 'sum', column: null }] })} />
       )}
     </ConfigSection>
   );
@@ -103,7 +99,7 @@ export default function SummarizeConfig({ source, config, problem, onChange, onR
         <SourcePicker source={source} />
         <div className="field span-2">
           <span>What do you want to do?</span>
-          <SelectButton value={config.mode} options={MODES} optionLabel="label" optionValue="id" onChange={(e) => e.value && set({ mode: e.value })} allowEmpty={false} />
+          <SelectButton value={config.mode} options={MODES} optionLabel="label" optionValue="id" onChange={(e) => e.value && set({ mode: e.value })} unselectable={false} />
         </div>
       </ConfigSection>
       {config.mode === 'group' && <GroupFields ds={ds} config={config} set={set} />}
@@ -117,7 +113,7 @@ export default function SummarizeConfig({ source, config, problem, onChange, onR
         {problem ? <p className="field-error" role="alert">{problem}</p> : (
           <p className="hint"><Info size={14} aria-hidden="true" /><span>Your file is not changed. You get a new Excel file with the result and a Settings sheet that says how it was made.</span></p>
         )}
-        <Button label={mode.action} size="small" icon={<Play size={14} />} disabled={!!problem} onClick={onRun} />
+        <Button label={mode.action} size="sm" icon={<Play size={14} />} disabled={!!problem} onClick={onRun} />
       </div>
     </div>
   );

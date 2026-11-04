@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button } from 'primereact/button';
+import { Button } from '../../components/ui/index.js';
 import { ArrowRightToLine, Download } from 'lucide-react';
 import { useWorkerTask } from '../../hooks/useWorkerTask.js';
 import { toAppError } from '../../core/errors.js';
@@ -77,7 +77,7 @@ export default function ExportButton({ buildSpec, label = 'Download Excel', titl
       {reuse && workspace && (
         <Button
           label="Use as input"
-          size="small"
+          size="sm"
           outlined
           severity="secondary"
           icon={<ArrowRightToLine size={14} />}
@@ -86,7 +86,7 @@ export default function ExportButton({ buildSpec, label = 'Download Excel', titl
           onClick={reuseResult}
         />
       )}
-      <Button label={label} size="small" icon={<Download size={14} />} disabled={disabled || running} onClick={() => run('download')} {...buttonProps} />
+      <Button label={label} size="sm" icon={<Download size={14} />} disabled={disabled || running} onClick={() => run('download')} {...buttonProps} />
       <JobDialog visible={running} title={as === 'reuse' ? 'Preparing the result' : title} progress={task.progress} elapsedMs={task.elapsedMs} etaMs={task.etaMs} unit={unit} onCancel={task.cancel} />
       {workspace && <ReuseDialog visible={choosing} names={workspace.names} onHide={() => setChoosing(false)} onPick={(i) => { setChoosing(false); run('reuse', i); }} />}
     </>

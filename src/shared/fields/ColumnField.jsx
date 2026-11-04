@@ -1,4 +1,4 @@
-import { Dropdown } from 'primereact/dropdown';
+import { Dropdown } from '../../components/ui/index.js';
 import { sampleValues } from '../../core/dataset/dataset.js';
 
 /** Pick one column of a dataset; shows a few sample values so the user can tell columns apart. */
@@ -12,7 +12,7 @@ export default function ColumnField({ label, dataset, value, onChange, samples =
         options={dataset.columns}
         onChange={(e) => onChange(e.value ?? null)}
         placeholder={placeholder}
-        showClear={clearable}
+        clearable={clearable}
         filter
         className={`w-full${error ? ' p-invalid' : ''}`}
       />

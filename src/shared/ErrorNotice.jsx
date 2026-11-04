@@ -1,4 +1,4 @@
-import { Button } from 'primereact/button';
+import { Button } from '../components/ui/index.js';
 import { TriangleAlert, X } from 'lucide-react';
 
 /** Inline error: what happened, what to do, and (collapsed) the technical detail. CANCELLED is silent. */
@@ -18,8 +18,8 @@ export default function ErrorNotice({ error, onRetry, retryLabel = 'Try again', 
         )}
       </div>
       <div className="error-notice__actions">
-        {onRetry && <Button label={retryLabel} size="small" outlined severity="secondary" onClick={onRetry} />}
-        {onDismiss && <Button text rounded size="small" severity="secondary" aria-label="Dismiss" icon={<X size={16} />} onClick={onDismiss} />}
+        {onRetry && <Button label={retryLabel} size="sm" outlined severity="secondary" onClick={onRetry} />}
+        {onDismiss && <Button text rounded size="sm" severity="secondary" aria-label="Dismiss" icon={<X size={16} />} onClick={onDismiss} />}
       </div>
     </div>
   );

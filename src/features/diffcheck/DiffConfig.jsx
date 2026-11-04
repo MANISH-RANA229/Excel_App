@@ -1,7 +1,4 @@
-import { Dropdown } from 'primereact/dropdown';
-import { MultiSelect } from 'primereact/multiselect';
-import NumberInput from '../../shared/fields/NumberInput.jsx';
-import { Button } from 'primereact/button';
+import { Button, Dropdown, MultiSelect, NumberInput } from '../../components/ui/index.js';
 import { Info, Play } from 'lucide-react';
 import { sampleValues } from '../../core/dataset/dataset.js';
 
@@ -17,7 +14,7 @@ function SidePicker({ label, data, column, carry, onColumn, onCarry }) {
         <span>Column to compare</span>
         <Dropdown value={column} options={data.columns} onChange={(e) => onColumn(e.value)} placeholder="Select a column" filter className="w-full" />
       </label>
-      <p className="samples clip" title={samples.join(', ')}>{samples.length ? `e.g. ${samples.join(' · ')}` : ' '}</p>
+      <p className="samples clip" title={samples.join(', ')}>{samples.length ? `e.g. ${samples.join(' · ')}` : ' '}</p>
       <label className="field">
         <span>Extra columns in result <em>(optional)</em></span>
         <MultiSelect
@@ -55,7 +52,7 @@ export default function DiffConfig({ datasets: [a, b], config, onChange, onRun }
           <Info size={14} aria-hidden="true" />
           <span>{pairs.toLocaleString()} pairs · ignores word order and case · rare keywords weigh more · tolerates 1-letter typos</span>
         </p>
-        <Button label="Run Diff Check" size="small" icon={<Play size={14} />} disabled={!config.colA || !config.colB} onClick={onRun} />
+        <Button label="Run Diff Check" size="sm" icon={<Play size={14} />} disabled={!config.colA || !config.colB} onClick={onRun} />
       </div>
     </div>
   );

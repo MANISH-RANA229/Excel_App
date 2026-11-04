@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { FolderOpen } from 'lucide-react';
 import AppShell from './layout/AppShell.jsx';
 import FilesPage from './pages/FilesPage.jsx';
+import LandingPage from './pages/LandingPage.jsx';
 import ErrorBoundary from './shared/ErrorBoundary.jsx';
 import JobDialog from './shared/JobDialog.jsx';
 import ToolSkeleton from './shared/ToolSkeleton.jsx';
@@ -25,15 +26,16 @@ export default function App() {
   // Opens a File (pasted table, a tool's result) in a slot; the slot is replaced only after a successful read, and kept for "Restore".
   const loader = useFileLoader({ files, setFiles, navigate });
   const workspace = useMemo(
-    () => ({ names: files.map((f) => f?.dataset.fileName ?? null), loadFile: loader.loadFile }),
+    () => ({ names: files.map((f) => f?.dataset?.fileName ?? null), loadFile: loader.loadFile }),
     [files, loader.loadFile],
   );
 
   const datasets = useMemo(() => files.map((f) => f?.dataset ?? null), [files]);
   const loaded = datasets.map((d) => !!d?.rowCount);
-  const route = resolveRoute(urlRoute, loaded);
+  const isLanding = urlRoute === 'landing';
+  const route = isLanding ? 'landing' : resolveRoute(urlRoute, loaded);
   // A typed or stale URL (unknown tool, files not loaded) is corrected in place so Back doesn't bounce into it.
-  useEffect(() => { if (route !== urlRoute) navigate(route, { replace: true }); }, [route, urlRoute, navigate]);
+  useEffect(() => { if (!isLanding && route !== urlRoute) navigate(route, { replace: true }); }, [route, urlRoute, navigate, isLanding]);
 
   // Tools mount on first visit and stay mounted (results survive navigation); they reset when any dataset is re-loaded.
   const dataKey = datasets.map((d) => d?.id ?? '').join('/');
@@ -65,6 +67,9 @@ export default function App() {
 
   return (
     <WorkspaceContext.Provider value={workspace}>
+      {isLanding ? (
+        <LandingPage onGetStarted={() => navigate('files')} />
+      ) : (
       <AppShell nav={nav} active={route} phase={phases[route]} storage={files.reduce((n, f) => n + (f?.file.size ?? 0), 0)} onNavigate={navigate} onClear={clear}>
         {route === 'files' && (
           <FilesPage
@@ -99,6 +104,7 @@ export default function App() {
           );
         })}
       </AppShell>
+      )}
       <JobDialog {...loader.job} />
       <WelcomeModal visible={welcome} onClose={() => setWelcome(false)} onLearnMore={() => navigate('info')} />
     </WorkspaceContext.Provider>

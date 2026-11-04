@@ -1,5 +1,4 @@
-import { Button } from 'primereact/button';
-import { Checkbox } from 'primereact/checkbox';
+import { Button, Checkbox } from '../../components/ui/index.js';
 import { Info, Play } from 'lucide-react';
 import ColumnField from '../../shared/fields/ColumnField.jsx';
 import ConfigSection from '../../shared/fields/ConfigSection.jsx';
@@ -31,7 +30,7 @@ export default function SplitConfig({ source, config, column, onChange, onRun })
           <Info size={14} aria-hidden="true" />
           <span>All columns, number formats and dates are kept exactly as in your file. You choose what to export on the next screen.</span>
         </p>
-        <Button label="Find groups" size="small" icon={<Play size={14} />} disabled={!column} onClick={onRun} />
+        <Button label="Find groups" size="sm" icon={<Play size={14} />} disabled={!column} onClick={onRun} />
       </div>
     </div>
   );

@@ -1,7 +1,4 @@
-import { Button } from 'primereact/button';
-import { Checkbox } from 'primereact/checkbox';
-import { Dropdown } from 'primereact/dropdown';
-import { SelectButton } from 'primereact/selectbutton';
+import { Button, Checkbox, Dropdown, SelectButton } from '../../components/ui/index.js';
 import { FileSpreadsheet, Info, Play } from 'lucide-react';
 import ColumnField from '../../shared/fields/ColumnField.jsx';
 import ConfigSection from '../../shared/fields/ConfigSection.jsx';
@@ -23,7 +20,7 @@ function SideConfig({ label, accent, dataset, cfg, onChange }) {
       <ColumnField label="Reference column (invoice no., UTR …)" dataset={dataset} value={cfg.key} onChange={(key) => set({ key })} clearable placeholder="Optional" />
       <div className="field">
         <span>Amount</span>
-        <SelectButton value={cfg.amountKind} options={AMOUNT_KINDS} onChange={(e) => e.value && set({ amountKind: e.value })} allowEmpty={false} />
+        <SelectButton value={cfg.amountKind} options={AMOUNT_KINDS} onChange={(e) => e.value && set({ amountKind: e.value })} unselectable={false} />
       </div>
       {cfg.amountKind === 'drcr' ? (
         <>
@@ -52,7 +49,7 @@ export default function ReconcileConfig({ datasets: [a, b], config, problem, onC
       <ConfigSection title="How to match" hint="How rows of the two files are paired and when amounts count as equal.">
         <div className="field">
           <span>Compare</span>
-          <SelectButton value={config.mode} options={MODES} onChange={(e) => e.value && set({ mode: e.value })} allowEmpty={false} />
+          <SelectButton value={config.mode} options={MODES} onChange={(e) => e.value && set({ mode: e.value })} unselectable={false} />
           <small className="muted">{line ? 'Each row is matched with at most one row in the other file.' : 'All lines with the same reference are added up and the totals compared (e.g. an invoice paid in parts).'}</small>
         </div>
         <label className="field">
@@ -91,7 +88,7 @@ export default function ReconcileConfig({ datasets: [a, b], config, problem, onC
         {problem
           ? <p className="field-error" role="alert">{problem}</p>
           : <p className="hint"><Info size={14} aria-hidden="true" /><span>Rows are matched in order of confidence: same reference and amount first, then same reference with a different amount, and so on.</span></p>}
-        <Button label="Reconcile" size="small" icon={<Play size={14} />} disabled={!!problem} onClick={onRun} />
+        <Button label="Reconcile" size="sm" icon={<Play size={14} />} disabled={!!problem} onClick={onRun} />
       </div>
     </div>
   );

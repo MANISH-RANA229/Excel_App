@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Button } from 'primereact/button';
+import { Button } from '../components/ui/index.js';
 import { CircleCheck, FileSpreadsheet, TriangleAlert } from 'lucide-react';
 import ErrorNotice from '../shared/ErrorNotice.jsx';
 import JobProgress from '../shared/JobProgress.jsx';
@@ -69,8 +69,8 @@ function Panel({ ds, label, accent, onOpenTool }) {
           )}
           {tools.size > 0 && (
             <div className="health__actions">
-              {tools.has('cleaner') && <Button label="Open Data Cleaner" size="small" outlined severity="secondary" onClick={() => onOpenTool('cleaner')} />}
-              {tools.has('duplicates') && <Button label="Open Duplicate Finder" size="small" outlined severity="secondary" onClick={() => onOpenTool('duplicates')} />}
+              {tools.has('cleaner') && <Button label="Open Data Cleaner" size="sm" outlined severity="secondary" onClick={() => onOpenTool('cleaner')} />}
+              {tools.has('duplicates') && <Button label="Open Duplicate Finder" size="sm" outlined severity="secondary" onClick={() => onOpenTool('duplicates')} />}
             </div>
           )}
         </>

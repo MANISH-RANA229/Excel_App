@@ -63,10 +63,95 @@ button { font: inherit; }
 .p-inputtext, .p-dropdown, .p-multiselect { border-radius: var(--radius); }
 .p-button.p-button-rounded, .p-button.p-button-icon-only.p-button-rounded { border-radius: var(--radius); }
 .p-chip, .p-chips .p-chips-multiple-container .p-chips-token { border-radius: 5px; }
-.p-inputtext, .p-dropdown-label, .p-multiselect-label { font-size: 1rem; }
-.p-dropdown .p-dropdown-label, .p-multiselect .p-multiselect-label { padding: 0.36rem 0.6rem; }
-.p-inputtext { padding: 0.36rem 0.6rem; }
-.p-multiselect.p-multiselect-chip .p-multiselect-token { padding: 0.05rem 0.5rem; }
+.p-inputtext { font-size: 1rem; padding: 0.36rem 0.6rem; }
+
+/* Dropdown & MultiSelect text alignment & sleek styling */
+.p-dropdown, .p-multiselect {
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 36px !important;
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--border-strong) !important;
+  background: var(--surface) !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+.p-dropdown { height: 36px; }
+.p-multiselect { height: auto; }
+.p-dropdown:not(.p-disabled):hover, .p-multiselect:not(.p-disabled):hover {
+  border-color: var(--text-muted) !important;
+}
+.p-dropdown:not(.p-disabled).p-focus, .p-multiselect:not(.p-disabled).p-focus {
+  border-color: var(--xl-green) !important;
+  box-shadow: var(--focus-ring) !important;
+}
+.p-dropdown .p-dropdown-label {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  padding: 0 0.75rem !important;
+  font-size: 0.93rem !important;
+  font-weight: 500 !important;
+  line-height: normal !important;
+  color: var(--text) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+.p-dropdown .p-dropdown-label.p-placeholder {
+  color: var(--text-dim) !important;
+  font-weight: 400 !important;
+}
+.p-multiselect .p-multiselect-label {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  min-height: 34px !important;
+  padding: 2px 0.75rem !important;
+  font-size: 0.93rem !important;
+  font-weight: 500 !important;
+  line-height: normal !important;
+  color: var(--text) !important;
+}
+.p-multiselect .p-multiselect-label.p-placeholder {
+  color: var(--text-dim) !important;
+  font-weight: 400 !important;
+}
+.p-dropdown .p-dropdown-trigger, .p-multiselect .p-multiselect-trigger {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+  width: 2.25rem !important;
+  color: var(--text-muted) !important;
+  flex-shrink: 0 !important;
+}
+.p-dropdown .p-dropdown-trigger svg, .p-multiselect .p-multiselect-trigger svg,
+.p-dropdown .p-dropdown-trigger .p-dropdown-trigger-icon, .p-multiselect .p-multiselect-trigger .p-dropdown-trigger-icon {
+  width: 14px !important;
+  height: 14px !important;
+  font-size: 14px !important;
+  color: var(--text-muted) !important;
+}
+.p-dropdown .p-dropdown-clear-icon, .p-multiselect .p-multiselect-clear-icon {
+  position: absolute !important;
+  right: 2.25rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+  color: var(--text-muted) !important;
+}
+.p-multiselect.p-multiselect-chip .p-multiselect-token {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 1px 7px !important;
+  margin: 1px 4px 1px 0 !important;
+  border-radius: 4px !important;
+  background: var(--xl-green-tint) !important;
+  color: var(--xl-green-dark) !important;
+  font-size: 0.84rem !important;
+  font-weight: 500 !important;
+}
 
 /* Thin scrollbar everywhere (main area, sidebar, grids, dropdown panels). The standard properties are for Firefox only:
    Chromium 121+ ignores ::-webkit-scrollbar as soon as scrollbar-width / scrollbar-color are set. */
@@ -381,30 +466,97 @@ button { font: inherit; }
 }
 
 /* Excel-like grid tables */
-.grid-table { font-size: 0.93rem; }
-.grid-table .p-datatable-thead > tr > th {
-  padding: 0.4rem 0.7rem; background: #F1F5F9; font-weight: 600; color: var(--text-2); white-space: nowrap;
-  border-color: var(--border) !important;
+.grid-table { font-size: 0.93rem; width: 100%; }
+.grid-table .p-datatable-wrapper { width: 100%; }
+.grid-table .p-datatable-table {
+  width: 100%;
+  min-width: 100%;
 }
-.grid-table .p-datatable-tbody > tr > td { padding: 0.32rem 0.7rem; border-color: var(--border-soft) !important; vertical-align: middle; }
-.grid-table .p-datatable-tbody > tr:hover > td { background: var(--xl-green-tint); }
+.grid-table .p-datatable-thead > tr > th {
+  padding: 0.5rem 0.75rem; background: #F8FAFC; font-size: 0.84rem; font-weight: 600;
+  letter-spacing: 0.01em; color: var(--text-2); white-space: nowrap;
+  border-color: var(--border) !important; border-bottom: 1px solid var(--border) !important;
+}
+.grid-table .p-datatable-tbody > tr > td {
+  padding: 0.4rem 0.75rem; border-color: var(--border-soft) !important;
+  vertical-align: middle; font-size: 0.9rem;
+}
+.grid-table .p-datatable-tbody > tr:hover > td { background: var(--xl-green-tint) !important; }
 .grid-table th.num .p-column-header-content { justify-content: flex-end; }
 .grid-table th.col-check .p-column-header-content { justify-content: center; }
-.grid-table .rownum { width: 1%; text-align: right !important; color: var(--text-muted); background: #F8FAFC; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.grid-table .rownum {
+  width: 1%; text-align: right !important; color: var(--text-muted); background: #F8FAFC;
+  font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 0.85rem; font-weight: 500;
+}
 .grid-table .p-datatable-thead > tr > th.rownum { background: #F1F5F9; }
-.cell { display: block; max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell {
+  display: block; width: 100%; min-width: 0; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .preview-table .cell { max-width: 200px; }
 .preview-table { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 
-.results-table .group-head { text-align: left; color: var(--xl-green-dark); max-width: 0; }
-.results-table .col-expander { width: 2rem; padding: 0 !important; text-align: center; }
-.results-table .col-expander .p-row-toggler { width: 1.6rem; height: 1.6rem; }
+.results-table .group-head {
+  text-align: left; color: var(--xl-green-dark); font-size: 0.84rem; font-weight: 700;
+  letter-spacing: 0.02em; background: #F1F5F9; border-bottom: 1px solid var(--border) !important;
+}
+.results-table .col-expander { width: 2.5rem; padding: 0 !important; text-align: center; }
+.results-table .col-expander .p-row-toggler {
+  width: 1.6rem; height: 1.6rem; border-radius: var(--radius); color: var(--text-muted);
+}
+.results-table .col-expander .p-row-toggler:hover {
+  background: var(--surface); color: var(--text);
+}
 .results-table .col-match { width: 1%; white-space: nowrap; }
 .results-table .col-rank { width: 1%; text-align: center !important; }
 .results-table .p-datatable-row-expansion > td { background: #F8FAFC; padding: 0 !important; }
-.results-table .p-paginator { padding: 0.25rem 0.5rem; justify-content: flex-end; border-top: 1px solid var(--border); }
-.results-table .p-paginator .p-paginator-current { font-size: 0.86rem; }
-.results-table .p-paginator button { min-width: 2rem; height: 2rem; }
+
+/* Professional Paginator */
+.grid-table .p-paginator,
+.results-table .p-paginator {
+  display: flex; align-items: center; justify-content: flex-end; gap: 6px;
+  padding: 0.5rem 1rem; background: var(--bg-sunken); border-top: 1px solid var(--border);
+}
+.grid-table .p-paginator .p-paginator-current,
+.results-table .p-paginator .p-paginator-current {
+  margin-right: auto; font-size: 0.86rem; color: var(--text-muted); font-weight: 400; padding: 0;
+}
+.grid-table .p-paginator .p-paginator-current strong,
+.results-table .p-paginator .p-paginator-current strong {
+  color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.paginator-rpp {
+  display: inline-flex; align-items: center; gap: 6px; margin-right: 8px;
+}
+.paginator-rpp__label {
+  font-size: 0.84rem; color: var(--text-muted); white-space: nowrap;
+}
+.paginator-rpp .p-dropdown {
+  height: 30px !important; min-height: 30px !important; min-width: 4.8rem;
+  border-radius: var(--radius) !important; border: 1px solid var(--border-strong) !important;
+  background: var(--surface) !important;
+}
+.paginator-rpp .p-dropdown .p-dropdown-label {
+  font-size: 0.85rem !important; font-weight: 600 !important; padding: 0 0.5rem !important;
+}
+.grid-table .p-paginator button,
+.results-table .p-paginator button {
+  min-width: 2rem; height: 2rem; border-radius: var(--radius); border: 1px solid transparent;
+  color: var(--text-2); transition: all 0.15s ease; font-size: 0.86rem;
+}
+.grid-table .p-paginator button:not(.p-disabled):hover,
+.results-table .p-paginator button:not(.p-disabled):hover {
+  background: var(--surface); border-color: var(--border-soft); color: var(--text);
+}
+.grid-table .p-paginator button.p-highlight,
+.results-table .p-paginator button.p-highlight {
+  background: var(--xl-green) !important; color: #FFFFFF !important;
+  border-color: var(--xl-green) !important; font-weight: 600;
+}
+.grid-table .p-paginator button.p-disabled,
+.results-table .p-paginator button.p-disabled {
+  opacity: 0.35;
+}
 
 .band-tag {
   display: inline-flex; align-items: baseline; gap: 6px; min-width: 6.5rem;
@@ -723,7 +875,8 @@ small { font-size: 0.9rem; }
 
 /* a settings card = stack of titled sections (ConfigSection), then a footer with the primary action */
 .config { overflow: hidden; }
-.config--form, .cleaner { max-width: 1080px; }
+.config--form { max-width: 1400px; }
+.cleaner { max-width: 100%; width: 100%; }
 .cfg-sec, .config__grid { padding: 20px 24px; }
 .cfg-sec + .cfg-sec, .cfg-sec + .config__grid, .config__grid + .config__grid, .config__sides + .config__grid { border-top: 1px solid var(--border-soft); }
 .cfg-sec__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -744,7 +897,7 @@ small { font-size: 0.9rem; }
 
 /* Compact configuration pages (ToolWorkflow adds page--config in the config and running phase only): same max width everywhere,
    tighter padding and gaps so a settings screen fits one view. Phones keep the roomier rules above. */
-.page--config { max-width: 1080px; gap: 10px; padding-top: 12px; padding-bottom: 12px; }
+.page--config { max-width: 1600px; gap: 12px; padding-top: 12px; padding-bottom: 16px; width: 100%; }
 .page--config .field > .check { padding: 2px 0; }
 .page--config .page-header { padding-bottom: 8px; }
 .page--config .page-header h1 { font-size: 1.28rem; }
@@ -779,8 +932,34 @@ small { font-size: 0.9rem; }
 .dup-table .col-check { width: 7rem; text-align: center !important; }
 .lookup-table .col-status { width: 1%; white-space: nowrap; }
 
-/* ---------- data cleaner ---------- */
+/* ---------- data cleaner & col builder ---------- */
 .cleaner { display: flex; flex-direction: column; gap: 14px; }
+.cleaner__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1080px) {
+  .cleaner__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.cleaner__col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.cleaner__preview-card {
+  height: 100%;
+}
+.cleaner__preview-scroll {
+  max-height: calc(100vh - 280px);
+  min-height: 240px;
+  overflow: auto;
+  border-radius: var(--radius);
+}
 .cleaner__section { display: flex; flex-direction: column; gap: 14px; padding: 20px 24px; }
 .cleaner__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
 .cleaner__head h2 { font-size: 1.07rem; font-weight: 600; letter-spacing: -0.005em; line-height: 1.3; }

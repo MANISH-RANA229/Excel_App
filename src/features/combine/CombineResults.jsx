@@ -1,4 +1,4 @@
-import { Button } from 'primereact/button';
+import { Button } from '../../components/ui/index.js';
 import { RotateCcw } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { formatDuration } from '../../core/format.js';
@@ -20,7 +20,7 @@ export default function CombineResults({ result, ms, onRestart }) {
         subtitle={`${stats.sources.length} files and sheets · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Start again" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
+            <Button label="Start again" size="sm" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton label="Download Excel" buildSpec={() => buildCombineExport(result)} />
           </>
         )}

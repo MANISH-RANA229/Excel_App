@@ -1,5 +1,4 @@
-import { Button } from 'primereact/button';
-import { Checkbox } from 'primereact/checkbox';
+import { Button, Checkbox } from '../../components/ui/index.js';
 import { ArrowRight, Info, Play, Plus, X } from 'lucide-react';
 import ColumnField from '../../shared/fields/ColumnField.jsx';
 import ConfigSection from '../../shared/fields/ConfigSection.jsx';
@@ -30,14 +29,14 @@ export default function KeyCompareConfig({ datasets: [a, b], config, problem, on
               <ArrowRight size={16} className="key-row__link" aria-hidden="true" />
               <ColumnField label={config.keys.length > 1 ? `Excel 2 (new) · key ${i + 1}` : 'Excel 2 (new)'} dataset={b} value={k.b} onChange={(v) => setKey(i, { b: v })} />
               {config.keys.length > 1 && (
-                <Button className="key-row__remove" icon={<X size={14} />} text severity="secondary" size="small" aria-label={`Remove key column ${i + 1}`} onClick={() => set({ keys: config.keys.filter((_, j) => j !== i) })} />
+                <Button className="key-row__remove" icon={<X size={14} />} text severity="secondary" size="sm" aria-label={`Remove key column ${i + 1}`} onClick={() => set({ keys: config.keys.filter((_, j) => j !== i) })} />
               )}
             </div>
           ))}
         </div>
         <div className="key-add">
           {config.keys.length < MAX_KEYS && (
-            <Button label="Add another key column" icon={<Plus size={14} />} text size="small" className="btn-add" onClick={() => set({ keys: [...config.keys, { a: null, b: null }] })} />
+            <Button label="Add another key column" icon={<Plus size={14} />} text size="sm" className="btn-add" onClick={() => set({ keys: [...config.keys, { a: null, b: null }] })} />
           )}
           <small className="muted">Use more than one column when no single column is unique, e.g. Order no. + Line no.</small>
         </div>
@@ -48,8 +47,8 @@ export default function KeyCompareConfig({ datasets: [a, b], config, problem, on
         hint={`${compared.length} of ${selectable.length} selected · columns with the same name in both files`}
         actions={selectable.length > 0 && (
           <div className="cfg-sec__actions">
-            <Button label="All" text size="small" onClick={() => set({ skipped: [] })} />
-            <Button label="None" text size="small" onClick={() => set({ skipped: selectable.map((s) => s.name) })} />
+            <Button label="All" text size="sm" onClick={() => set({ skipped: [] })} />
+            <Button label="None" text size="sm" onClick={() => set({ skipped: selectable.map((s) => s.name) })} />
           </div>
         )}
         cols={1}
@@ -92,7 +91,7 @@ export default function KeyCompareConfig({ datasets: [a, b], config, problem, on
         {problem
           ? <p className="field-error" role="alert">{problem}</p>
           : <p className="hint"><Info size={14} aria-hidden="true" /><span>Excel 1 is treated as the old version and Excel 2 as the new one. Rows without a key are never matched.</span></p>}
-        <Button label="Compare" size="small" icon={<Play size={14} />} disabled={!!problem} onClick={onRun} />
+        <Button label="Compare" size="sm" icon={<Play size={14} />} disabled={!!problem} onClick={onRun} />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button } from 'primereact/button';
+import { Button } from '../components/ui/index.js';
 import { Check, ChevronDown, Download, FolderOpen, Info, Laptop, Search, ShieldCheck, SlidersHorizontal, Upload } from 'lucide-react';
 import PageHeader from '../layout/PageHeader.jsx';
 import BandTag from '../shared/results/BandTag.jsx';

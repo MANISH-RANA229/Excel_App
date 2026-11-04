@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog } from 'primereact/dialog';
-import { Button } from 'primereact/button';
-import { SelectButton } from 'primereact/selectbutton';
+import { Button, SelectButton } from '../components/ui/index.js';
 import { ClipboardPaste, Info, ShieldCheck } from 'lucide-react';
 import { describePasted, pasteTooLarge, pastedFile } from '../core/dataset/pasted.js';
 import { MAX_PASTE_MB } from '../core/limits.js';
@@ -72,7 +71,7 @@ export default function PasteTableDialog({ visible, onHide, initialText = '', na
         </p>
         <div className="paste__target">
           <span className="paste__label">Open as</span>
-          <SelectButton value={slot} options={SLOTS} allowEmpty={false} onChange={(e) => e.value != null && setSlot(e.value)} aria-label="Open the table as Excel 1 or Excel 2" />
+          <SelectButton value={slot} options={SLOTS} unselectable={false} onChange={(e) => e.value != null && setSlot(e.value)} aria-label="Open the table as Excel 1 or Excel 2" />
         </div>
         {names[slot] && (
           <p className="hint"><Info size={14} aria-hidden="true" /><span>This replaces <b>{names[slot]}</b> in the app. You can bring it back with Restore. The file on your computer is not changed.</span></p>

@@ -32,6 +32,25 @@ export default function GridTable({
     return rows;
   }, [grid.view, grid.first, grid.rows, grid.total, count, rowsKey]);
 
+  const paginatorTemplate = useMemo(() => ({
+    layout: 'CurrentPageReport RowsPerPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink',
+    CurrentPageReport: (options) => {
+      const from = options.totalRecords === 0 ? 0 : options.first;
+      const to = options.totalRecords === 0 ? 0 : options.last;
+      return (
+        <span className="p-paginator-current">
+          Showing <strong>{from.toLocaleString()}</strong>–<strong>{to.toLocaleString()}</strong> of <strong>{options.totalRecords.toLocaleString()}</strong> rows
+        </span>
+      );
+    },
+    RowsPerPageDropdown: (options) => (
+      <div className="paginator-rpp">
+        <span className="paginator-rpp__label">Rows per page:</span>
+        {options.element}
+      </div>
+    ),
+  }), []);
+
   return (
     <>
       {toolbar?.({ total: grid.total, count })}
@@ -49,14 +68,14 @@ export default function GridTable({
         onSort={grid.onSort}
         removableSort
         rowsPerPageOptions={rowsPerPageOptions}
-        paginatorTemplate="RowsPerPageDropdown CurrentPageReport FirstPageLink PrevPageLink NextPageLink LastPageLink"
-        currentPageReportTemplate="{first}–{last} of {totalRecords}"
+        paginatorTemplate={paginatorTemplate}
+        pageLinkSize={3}
         headerColumnGroup={headerGroup}
         size="small"
         showGridlines
         scrollable
         scrollHeight="max(320px, calc(100vh - 380px))"
-        tableStyle={{ minWidth: '760px' }}
+        tableStyle={{ minWidth: '100%', width: '100%' }}
         expandedRows={expanded}
         onRowToggle={(e) => setExpanded(e.data)}
         rowExpansionTemplate={expansion}
