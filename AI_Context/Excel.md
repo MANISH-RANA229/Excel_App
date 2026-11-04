@@ -40,7 +40,7 @@ npm run build     # production build -> dist/
 npm run preview   # serve dist (we used port 4173)
 npm run check     # runs EVERY src/**/*.check.js (plain assert scripts), see scripts/check.mjs; optional filter: npm run check reconcile
 ```
-Last state: `npm run check` → **47 check files pass**, `npm run build` OK. `npm audit --omit=dev` → 0 vulnerabilities.
+Last state: `npm run check` → **49 check files pass**, `npm run build` OK. `npm audit --omit=dev` → 0 vulnerabilities.
 (Filter note: `npm run check name` matches against the Windows path, so use a plain word like `render`, not `export/render`.)
 
 ## 3. Stack and decisions (with the reason)
@@ -51,13 +51,14 @@ Last state: `npm run check` → **47 check files pass**, `npm run build` OK. `np
   **Do not upgrade to 11+ without asking.**
 - **SheetJS `xlsx` 0.20.3** installed from `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` (npm's copy is stale/vulnerable).
   Used only to READ, only inside the read worker (dynamic import). SheetJS CE cannot write cell styles.
+- **Unified Design System & Component Library (`src/theme/`, `src/components/ui/`)**:
+  Form controls and UI elements are wrapped in a central reusable library in `src/components/ui/index.js` (`Button`, `Dropdown`, `Select`, `InputText`, `Input`, `Checkbox`, `SelectButton`, `SegmentedControl`, `MultiSelect`, `NumberStepper`, `NumberInput`, `Badge`, `Card`).
+  **Rule**: All tools and shared components import from `components/ui/`, never from raw vendor packages directly. If UI styling, accessibility, or behaviour needs to change in the future, changing the component file in `src/components/ui/` updates the entire suite immediately.
+  Tokens live in `src/theme/tokens.js` and `src/theme/theme.css` (`--xl-green`, `--xl-green-dark`, `--xl-green-soft`, `--text`, `--radius: 7px`, `--radius-lg: 7px`).
 - **Theme / design system (global, from the user's design board)**: Primary `#107C41`, Secondary `#185C37`, Tertiary `#D1E7DD`, Neutral `#0F172A`
-  (slate greys), font **Inter** (variable, bundled via `@fontsource-variable/inter`, so the app makes no CDN requests). Tokens are the CSS
-  variables at the top of `src/styles.css` (`--xl-green` = Primary, `--xl-green-dark` = Secondary, `--xl-green-soft` = Tertiary, `--text` = Neutral;
-  the old names are kept so tool pages pick the new palette up). PrimeReact **Fluent** theme (`fluent-light`) is recoloured to the same values by
-  the `THEME_COLORS` map in the Vite plugin in `vite.config.js` (accent to green, orange "secondary" to slate, warm greys to slate). Buttons: default =
-  Primary, `severity="secondary" outlined` = the design's neutral "Outlined". Base font-size 14px for compact density
-  (`html { font-size: 14px }`). Light theme only. Icons: `lucide-react` only (no emoji). Product name in the header/title: "Excel Suite" + PRO chip.
+  (slate greys), font **Inter** (variable, bundled via `@fontsource-variable/inter`, so the app makes no CDN requests). PrimeReact **Fluent** theme (`fluent-light`) is recoloured to the same values by
+  the `THEME_COLORS` map in the Vite plugin in `vite.config.js`. Base font-size 14px for compact density (`html { font-size: 14px }`). Light theme only. Icons: `lucide-react` only (no emoji). Product name: "Excel Suite" + PRO chip.
+- **Corner radius limit**: Maximum 7px radius on all cards, dialogs, buttons, inputs, chips, tables (`--radius: 7px; --radius-lg: 7px;`). Only round dots, radios, and slider handles stay 50%.
 - **No ExcelJS in the app.** ExcelJS's browser build exports only the in-memory `Workbook`; its streaming writer needs Node's
   `archiver`/`fs`, and the in-memory writer needs >1 GB for 500k rows. So export uses a **custom OOXML writer + streaming ZIP
   writer** (section 6). ExcelJS remains a devDependency purely to read files back in checks.
@@ -79,6 +80,8 @@ Last state: `npm run check` → **47 check files pass**, `npm run build` OK. `np
 4. **A tool is a plugin**: one folder + one manifest line in `src/features/index.js`.
 5. **Declarative over imperative**: Cleaner operations, Reconcile passes, export specs, keep-rules are registries/specs.
 6. **Typed errors at every boundary; honest progress** (ETA only when real).
+7. **Strict defensive UI presentation**: Result components (`*Results.jsx`) must safely access context, datasets, row numbers, and totals using optional chaining (`?.`) and fallbacks (`(a?.ds || a?.dataset)?.fileName ?? 'Excel 1'`) so incomplete or unexpected worker states never crash the view.
+8. **UI component abstraction**: Never import raw vendor form controls directly in feature pages; import from `src/components/ui/index.js`.
 
 ### Adding a new tool (checklist)
 Create `src/features/<id>/` with: `index.js` (manifest `{ id, title, description, icon, category: 'compare'|'clean'|'organize', needs: 1|2, Component: lazy(() => import('./XTool.jsx')) }`),
@@ -88,6 +91,22 @@ Create `src/features/<id>/` with: `index.js` (manifest `{ id, title, description
 ## 5. File map (src/)
 
 ```
+theme/                     Design system tokens and styling contracts
+  tokens.js                Design tokens (colors, radii, typography, elevation, spacing)
+  theme.css                CSS variables derived from tokens.js
+  index.js                 Theme entry point exporting tokens and helpers
+  tokens.check.js          Contract check verifying tokens integrity and component exports
+components/ui/             Unified, accessible UI components (wrapped vendor controls)
+  Button.jsx               Theme-aligned button with size/variant/severity props
+  Dropdown.jsx / Select.jsx Single-select with standardized small/medium density and label
+  InputText.jsx / Input.jsx Text input field with consistent styling and focus states
+  Checkbox.jsx             Customized accessible checkbox
+  SelectButton.jsx / SegmentedControl.jsx  Segmented toggle control
+  MultiSelect.jsx          Multi-value selection dropdown
+  NumberStepper.jsx / NumberInput.jsx  Numeric stepper with accessible plus/minus controls
+  Badge.jsx                Status badge and counter pill
+  Card.jsx                 Surface container adhering to max 7px border radius
+  index.js                 Central export barrel for all UI components
 core/                      pure JS (+ *.check.js beside each module)
   errors.js                AppError(code,{message,hint,detail}); codes FILE_UNSUPPORTED/ENCRYPTED/CORRUPT/EMPTY, TOO_LARGE, NO_HEADER, BAD_CONFIG,
                            NO_RESULT, EXPORT_FAILED, WORKER_CRASH, CANCELLED, UNKNOWN; serializeError/reviveError/toAppError
@@ -214,6 +233,10 @@ Test approach: pure checks in `src/**/*.check.js` (assert scripts) + real-browse
 
 ## 11. Gotchas already hit (don't repeat)
 
+- **UI Component Imports:** Always import buttons, dropdowns, inputs, checkboxes, segmented controls from `components/ui/index.js`, not directly from `primereact/*`.
+- **Diff Check Context (`makeSide`):** In `features/diffcheck/side.js`, `makeSide` returns `{ ds, dataset: ds, column, col, carry, carryCols }`. Result screens must always access datasets defensively via `(a?.ds || a?.dataset)?.fileName ?? 'Excel 1'` and row numbers via `(a?.ds || a?.dataset)?.rowNums?.[ai]`.
+- **Result Screens Defensive Programming:** All result screens (`*Results.jsx`) must defensively guard against missing `ctx`, `totals` (`result?.totals || ctx?.totals || {}`), `fileName`, and empty arrays so that unexpected or partial data never crashes the view into the ErrorBoundary.
+- **`WordBreakdown` & `HighlightedText`:** `HighlightedText` accepts `{ text, matched, fuzzy, sets }` so that passing either `sets={highlightSets(...)}` or `{...highlightSets(...)}` works without throwing null-property errors. `highlightSets` defensively returns empty sets if `words` is null/undefined.
 - **Typed arrays and JSX:** `Int32Array.map(row => <tr/>)` coerces elements to numbers (rendered "0000"). Convert with `Array.from(...)` first (was a real bug in the Duplicates group expansion).
 - **Typed-array views are cloned whole** by `postMessage` unless transferred; views of one buffer in one message share a single clone (Split relies on this).
 - **React stale state:** two file cards finishing together overwrote each other until `setFiles` became functional.
@@ -257,7 +280,6 @@ Test approach: pure checks in `src/**/*.check.js` (assert scripts) + real-browse
 ## 12. Working preferences of the user (from this session)
 
 - **The user's original files must always be safe** (said 2026-10-31): nothing may ever overwrite or modify a loaded file; every output is a new file; anything that replaces a loaded slot must be restorable.
-
 - Wants a **minimal, professional, Excel-green, compact** UI (small controls, sidebar + global header, dense Excel-like tables); first design (airy indigo wizard) was rejected as "too big".
 - **Page-by-page redesign in progress (started 2026-10-31):** the user sends one design image per page; colours and fonts are global (design board above). Done: home page (Files & Spreadsheets) + the shared shell (header, sidebar). Tool pages only inherited the new tokens (palette, Inter, radii, page title); each still waits for its own design. Rule: redesign only, no functionality may change or break. Design elements with no real feature behind them were NOT faked: Auto-save chip, user avatar, "Recent History", cell tags like "92% Match"/"UPPERCASE", "Encoding" (the footer shows file type + size instead); the "Add File / Sheet" button is "Add file" and is disabled when both slots are full.
 - Wants **senior-level architecture, reusable components, no throwaway code**, nothing already working may break (regression-checked), proper loaders with elapsed/ETA, proper error handling, optimised JS-only logic.

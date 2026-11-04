@@ -1,7 +1,7 @@
 import { useDeferredValue, useState } from 'react';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
-import { InputText } from 'primereact/inputtext';
+import { InputText } from '../../components/ui/index.js';
 import { Search } from 'lucide-react';
 import { isDateFormat } from '../../core/dataset/dataset.js';
 import { formatSerial } from '../../core/parse/date.js';
@@ -43,11 +43,22 @@ export default function ResultGrid({ table, searchLabel = 'Search the result', c
     <div className="toolbar">
       <IconField iconPosition="left" className="toolbar__search">
         <InputIcon><Search size={14} /></InputIcon>
-        <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder={searchLabel} aria-label={searchLabel} className="p-inputtext-sm w-full" />
+        <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder={searchLabel} aria-label={searchLabel} size="sm" className="w-full" />
       </IconField>
       <span className="toolbar__count">{total.toLocaleString()} of {count.toLocaleString()} rows</span>
     </div>
   );
 
-  return <GridTable count={table.rowCount} getRow={getRow} columns={columns} accept={accept} filterKey={query} sorters={sorters} toolbar={toolbar} className={`result-table ${className}`} />;
+  return (
+    <GridTable
+      count={table.rowCount}
+      getRow={getRow}
+      columns={columns}
+      accept={accept}
+      filterKey={query}
+      sorters={sorters}
+      toolbar={toolbar}
+      className={className}
+    />
+  );
 }

@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
 // Route = the id after "#/" (e.g. "#/diffcheck"). Hash URLs need no server rewrite rules, so the build works on any static host.
-const read = () => window.location.hash.replace(/^#\/?/, '') || 'files';
+const read = () => window.location.hash.replace(/^#\/?/, '') || 'landing';
 const subscribe = (onChange) => {
   window.addEventListener('hashchange', onChange);
   return () => window.removeEventListener('hashchange', onChange);

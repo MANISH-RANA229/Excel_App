@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button } from 'primereact/button';
+import { Button } from '../components/ui/index.js';
 import { ArrowLeftRight, ClipboardPaste, Plus, Undo2, X, Zap } from 'lucide-react';
 import PageHeader from '../layout/PageHeader.jsx';
 import FileDropCard from '../shared/FileDropCard.jsx';
@@ -17,7 +17,7 @@ export default function FilesPage({ files, onFiles, datasets, loaded, onOpenTool
   const setFile = (i) => (f) => onFiles((prev) => prev.map((p, j) => (j === i ? f : p)));
   const cards = [useRef(null), useRef(null)];
   const free = files.findIndex((f) => !f); // the slot "Add file" fills; -1 when both are taken
-  const names = files.map((f) => f?.dataset.fileName ?? null);
+  const names = files.map((f) => f?.dataset?.fileName ?? null);
   const [paste, setPaste] = useState(null); // null = closed, otherwise the text the paste box starts with
 
   // Ctrl+V anywhere on the page (not while typing in a field) offers to load the copied table.
@@ -58,9 +58,9 @@ export default function FilesPage({ files, onFiles, datasets, loaded, onOpenTool
       {restorable && (
         <div className="restore-bar" role="status">
           <Undo2 size={16} aria-hidden="true" />
-          <span>Excel {restorable.slot + 1} is now <b>{restorable.current.dataset.fileName}</b>. The file you had before is kept in this tab.</span>
-          <Button label={`Restore ${restorable.previous.dataset.fileName}`} size="small" outlined severity="secondary" onClick={onRestore} />
-          <Button text rounded size="small" severity="secondary" aria-label="Dismiss" icon={<X size={16} />} onClick={onDismissRestore} />
+          <span>Excel {restorable.slot + 1} is now <b>{restorable.current?.dataset?.fileName ?? 'new file'}</b>. The file you had before is kept in this tab.</span>
+          <Button label={`Restore ${restorable.previous?.dataset?.fileName ?? 'previous file'}`} size="sm" outlined severity="secondary" onClick={onRestore} />
+          <Button text rounded size="sm" severity="secondary" aria-label="Dismiss" icon={<X size={16} />} onClick={onDismissRestore} />
         </div>
       )}
       <div className="grid-2">

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { Dropdown } from 'primereact/dropdown';
+import { Button, Dropdown } from '../components/ui/index.js';
 import NumberInput from './fields/NumberInput.jsx';
-import { Button } from 'primereact/button';
 import { Message } from 'primereact/message';
 import { ChevronLeft, ChevronRight, FileSpreadsheet, FileUp, X } from 'lucide-react';
 import { keyCandidate } from '../core/dataset/keyCandidate.js';
@@ -59,60 +58,82 @@ export default function FileDropCard({ ref, label, accent = 'a', value, onChange
 
   const started = useRef(false);
   useEffect(() => {
-    if (!initialFile || value || started.current) return undefined;
-    started.current = true;
-    read(initialFile, initialSheet ? { sheet: initialSheet } : undefined);
-    return () => { started.current = false; }; // dev StrictMode unmounts once, which kills this read: let the remount start it again
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (initialFile && !started.current) {
+      started.current = true;
+      read(initialFile, { sheet: initialSheet });
+    }
+    return () => { started.current = false; };
+  }, [initialFile, initialSheet, read]);
 
-  // Header-row edits re-read the sheet; wait until the user stops clicking.
-  useEffect(() => { setHeaderDraft(dataset?.headerRow ?? null); }, [dataset?.id, task.status === 'error']); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!value || headerDraft == null || headerDraft === dataset.headerRow) return undefined;
-    const t = setTimeout(() => read(value.file, { sheet: dataset.sheet, headerRow: headerDraft }), HEADER_DEBOUNCE_MS);
-    return () => clearTimeout(t);
-  }, [headerDraft]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (dataset) setHeaderDraft(dataset.headerRow);
+  }, [dataset?.headerRow, dataset?.sheet, dataset?.id]);
+
+  useEffect(() => {
+    if (!value || headerDraft === null || headerDraft === dataset?.headerRow) return;
+    const timer = setTimeout(() => read(value.file, { sheet: dataset.sheet, headerRow: headerDraft }), HEADER_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [headerDraft, value, dataset, read]);
+
+  const input = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept={ACCEPT}
+      style={{ display: 'none' }}
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) read(file);
+        e.target.value = '';
+      }}
+    />
+  );
 
   const loader = (
     <JobProgress
-      variant="inline"
-      title={`Reading ${pendingFile.current?.name ?? 'file'}`}
-      stages={STAGES}
-      progress={task.progress}
-      elapsedMs={task.elapsedMs}
-      etaMs={task.etaMs}
-      unit="rows"
-      onCancel={task.cancel}
+      task={task}
+      stageLabels={STAGES}
+      variant={compact ? 'inline' : 'card'}
+      onCancel={() => { task.cancel(); onChange(null); }}
     />
   );
-  const input = (
-    <input ref={inputRef} type="file" accept={ACCEPT} hidden onChange={(e) => { if (e.target.files[0]) read(e.target.files[0]); e.target.value = ''; }} />
+
+  const error = task.error && (
+    <ErrorNotice error={task.error} onDismiss={() => task.reset()} />
   );
-  const error = <ErrorNotice error={task.error} onRetry={value ? undefined : () => inputRef.current.click()} retryLabel="Choose another file" onDismiss={task.reset} />;
 
   if (compact) {
-    const name = dataset?.fileName ?? pendingFile.current?.name ?? initialFile?.name ?? label;
     return (
       <div className="card file-card file-card--compact">
         <div className="file-card__head">
-          <FileSpreadsheet size={18} className="text-brand" aria-hidden="true" />
+          <FileSpreadsheet size={16} className="text-brand" aria-hidden="true" />
           <div className="file-card__name">
-            <span className="card__label">{label}</span>
-            <strong title={name}>{name}</strong>
+            <strong>{dataset?.fileName ?? pendingFile.current?.name ?? 'Spreadsheet'}</strong>
+            {dataset && <span className="file-card__meta">{dataset.sheet} · {dataset.rowCount.toLocaleString()} rows</span>}
           </div>
-          {dataset && <span className="file-card__meta">{dataset.rowCount.toLocaleString()} rows · {dataset.columns.length} cols</span>}
           {actions}
-          <Button text rounded size="small" severity="secondary" aria-label={`Remove ${name}`} icon={<X size={16} />} onClick={() => { task.reset(); onChange(null); }} />
+          <Button text rounded size="sm" severity="secondary" aria-label="Remove sheet" icon={<X size={14} />} onClick={() => { task.reset(); onChange(null); }} />
         </div>
-        {value && (
+        {dataset && (
           <div className="file-card__controls">
-            <label className="field">
-              <span>Sheet</span>
-              <Dropdown value={dataset.sheet} options={value.sheetNames} disabled={busy} onChange={(e) => read(value.file, { sheet: e.value })} className="w-full" />
-            </label>
-            <label className="field field--narrow">
+            {value?.sheetNames?.length > 1 && (
+              <label className="field field--inline">
+                <span>Sheet</span>
+                <Dropdown value={dataset.sheet} options={value.sheetNames} disabled={busy} onChange={(e) => read(value.file, { sheet: e.value })} size="sm" />
+              </label>
+            )}
+            <label className="field field--inline">
               <span>Header row</span>
-              <NumberInput label={`header row of ${name}`} value={headerDraft} onValueChange={(e) => e.value && setHeaderDraft(e.value)} min={1} disabled={busy} inputClassName="num-input" />
+              <NumberInput
+                label="header row"
+                value={headerDraft}
+                onValueChange={(e) => e.value && setHeaderDraft(e.value)}
+                min={1}
+                disabled={busy}
+                inputClassName="num-input"
+                decrementButtonIcon={<ChevronLeft size={14} />}
+                incrementButtonIcon={<ChevronRight size={14} />}
+              />
             </label>
           </div>
         )}
@@ -161,7 +182,7 @@ export default function FileDropCard({ ref, label, accent = 'a', value, onChange
         {tag}
         <strong className="file-card__title clip" title={dataset.fileName}>{dataset.fileName}</strong>
         <span className="file-card__meta">{dataset.rowCount.toLocaleString()} rows · {dataset.columns.length} cols</span>
-        <Button text rounded size="small" severity="secondary" aria-label={`Remove ${label}`} icon={<X size={16} />} onClick={() => { task.reset(); onChange(null); }} />
+        <Button text rounded size="sm" severity="secondary" aria-label={`Remove ${label}`} icon={<X size={16} />} onClick={() => { task.reset(); onChange(null); }} />
       </div>
       <div className="file-card__controls">
         <label className="field field--inline">
@@ -171,6 +192,7 @@ export default function FileDropCard({ ref, label, accent = 'a', value, onChange
             options={value.sheetNames}
             disabled={busy}
             onChange={(e) => read(value.file, { sheet: e.value })}
+            size="sm"
           />
         </label>
         <label className="field field--inline">

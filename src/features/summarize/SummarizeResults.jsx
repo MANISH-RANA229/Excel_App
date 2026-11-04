@@ -1,4 +1,4 @@
-import { Button } from 'primereact/button';
+import { Button } from '../../components/ui/index.js';
 import { RotateCcw } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { formatDuration } from '../../core/format.js';
@@ -11,9 +11,9 @@ import { buildSummarizeExport } from './exportSpec.js';
 const TITLES = { group: 'Summary', unpivot: 'Columns turned into rows', transpose: 'Rows and columns swapped' };
 
 export default function SummarizeResults({ result, ctx, ms, onRestart }) {
-  const { ds, config } = ctx;
-  const { table, stats, mode } = result;
-  const n = (v) => v.toLocaleString();
+  const { ds, config } = ctx || {};
+  const { table = { rowCount: 0, columns: [] }, stats = {}, mode = 'group' } = result || {};
+  const n = (v) => (v ?? 0).toLocaleString();
 
   const kpis = mode === 'group'
     ? [['Rows read', n(stats.rows)], ['Groups', n(stats.groups)], ...(stats.acrossValues ? [['Columns across', n(stats.acrossValues)]] : []), ['Rows in result', n(table.rowCount)]]
@@ -25,14 +25,17 @@ export default function SummarizeResults({ result, ctx, ms, onRestart }) {
     ...(stats.notes ?? []),
   ];
 
+  const fileName = ds?.fileName ?? 'File';
+  const sheetName = ds?.sheet ?? 'Sheet';
+
   return (
     <div className="page">
       <PageHeader
-        title={TITLES[mode]}
-        subtitle={`${ds.fileName} · ${ds.sheet} · ${formatDuration(ms)}`}
+        title={TITLES[mode] ?? 'Summary'}
+        subtitle={`${fileName} · ${sheetName} · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="Start again" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
+            <Button label="Start again" size="sm" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton label="Download Excel" buildSpec={() => buildSummarizeExport(result, { ds, description: describeConfig(config) })} />
           </>
         )}

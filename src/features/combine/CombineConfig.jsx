@@ -1,7 +1,5 @@
 import { useRef, useState } from 'react';
-import { Button } from 'primereact/button';
-import { Checkbox } from 'primereact/checkbox';
-import { Dropdown } from 'primereact/dropdown';
+import { Button, Checkbox, Dropdown } from '../../components/ui/index.js';
 import { FilePlus2, Layers, Play } from 'lucide-react';
 import FileDropCard, { ACCEPT } from '../../shared/FileDropCard.jsx';
 import { MAX_SOURCES } from './engine.js';
@@ -49,54 +47,64 @@ export default function CombineConfig({ sources, loaded, plan, config, problem, 
             <span className="dropzone__title">{sources.length ? 'Add more files' : 'Drop the files to combine, or click to browse'}</span>
             <span className="dropzone__hint">.xlsx · .xls · .csv · several at once · up to {MAX_SOURCES}</span>
           </button>
-          <input ref={inputRef} type="file" accept={ACCEPT} multiple hidden onChange={(e) => { onAdd(e.target.files); e.target.value = ''; }} />
+          <input ref={inputRef} type="file" multiple accept={ACCEPT} style={{ display: 'none' }} onChange={(e) => { onAdd(e.target.files); e.target.value = ''; }} />
         </div>
 
         {sources.length > 0 && (
-          <div className="span-2 source-list">
-            {sources.map((s, i) => {
-              const unused = unusedSheets(s);
+          <div className="source-list span-2">
+            {sources.map((s) => {
+              const more = unusedSheets(s);
               return (
                 <FileDropCard
                   key={s.key}
                   compact
-                  label={`File ${i + 1}`}
                   initialFile={s.file}
                   initialSheet={s.sheet}
                   value={s.value}
                   onChange={(v) => onValue(s.key, v)}
-                  actions={unused.length && !full ? (
-                    <Button label={`Add ${unused.length === 1 ? 'its other sheet' : `its ${unused.length} other sheets`}`} size="small" text icon={<Layers size={14} />} onClick={() => onAddSheets(s.key)} title="Adds a row for each sheet of this workbook that is not in the list yet" />
-                  ) : null}
+                  actions={more.length > 0 && (
+                    <Button
+                      label="Add its other sheets"
+                      icon={<Layers size={14} />}
+                      text
+                      size="sm"
+                      onClick={() => onAddSheets(s.file, more)}
+                      title={`Adds ${more.join(', ')} as separate sources`}
+                    />
+                  )}
                 />
               );
             })}
           </div>
         )}
-      </div>
 
-      <div className="config__grid cmp-options">
         <div className="field">
-          <span>Add columns that say where each row came from</span>
-          <label className="check"><Checkbox checked={config.addFile} onChange={(e) => set({ addFile: e.checked })} /><span>Source file</span></label>
-          <label className="check"><Checkbox checked={config.addSheet} onChange={(e) => set({ addSheet: e.checked })} /><span>Source sheet</span></label>
-          <label className="check"><Checkbox checked={config.addRow} onChange={(e) => set({ addRow: e.checked })} /><span>Source row (the row number in its own file)</span></label>
+          <span>Extra columns in the result</span>
+          <label className="check"><Checkbox checked={config.includeSourceFile} onChange={(e) => set({ includeSourceFile: e.checked })} /><span>Source file name</span></label>
+          <label className="check"><Checkbox checked={config.includeSourceSheet} onChange={(e) => set({ includeSourceSheet: e.checked })} /><span>Sheet name</span></label>
+          <label className="check"><Checkbox checked={config.includeSourceRow} onChange={(e) => set({ includeSourceRow: e.checked })} /><span>Original row number</span></label>
         </div>
+
         <div className="field">
           <span>Columns</span>
-          <label className="check"><Checkbox checked={config.onlyCommon} onChange={(e) => set({ onlyCommon: e.checked })} /><span>Only columns found in every file</span></label>
-          <small className="muted">Otherwise every column is kept and the cells of files that lack it stay blank.</small>
+          <label className="check">
+            <Checkbox checked={config.commonOnly} onChange={(e) => set({ commonOnly: e.checked })} />
+            <span>Only keep columns found in every file</span>
+          </label>
+          <small className="muted">Columns are matched by name (ignoring upper/lower case, spaces and punctuation).</small>
         </div>
       </div>
 
-      {rows.length > 0 && (
-        <div className="config__grid map-panel">
-          <div className="field span-2">
-            <span className="config__section-title">Columns that are not in every file</span>
-            <small className="muted">Same meaning, different name (“Cust Name” and “Customer”)? Choose the column to join it to.</small>
+      {rows.length > 0 && !config.commonOnly && (
+        <div className="cfg-sec map-panel">
+          <div className="cfg-sec__head">
+            <h3>Columns found in some files only</h3>
+            <p className="muted">These are kept as their own columns by default. You can join them into an existing column if they mean the same thing.</p>
+          </div>
+          <div className="measure-rows">
             {rows.slice(0, MAX_MAPPINGS).map(({ ds, column, target }) => (
               <div className="map-row" key={`${ds.key}|${column}`}>
-                <span className="clip muted" title={`${ds.fileName} · ${ds.sheet}`}>{ds.fileName} · {ds.sheet}</span>
+                <span className="clip muted">{ds.fileName} · {ds.sheet}</span>
                 <strong className="clip" title={column}>{column}</strong>
                 <label className="field">
                   <span className="sr-only">Join {column} of {ds.fileName} to</span>
@@ -118,7 +126,7 @@ export default function CombineConfig({ sources, loaded, plan, config, problem, 
         {problem ? <p className="field-error" role="alert">{problem}</p> : (
           <p className="hint">{totalRows.toLocaleString()} rows from {loaded.length} files and sheets will be stacked into {plan.targets.length} columns. Your files are not changed.</p>
         )}
-        <Button label="Combine" size="small" icon={<Play size={14} />} disabled={!!problem} onClick={onRun} />
+        <Button label="Combine" size="sm" icon={<Play size={14} />} disabled={!!problem} onClick={onRun} />
       </div>
     </div>
   );

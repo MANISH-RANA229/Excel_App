@@ -1,4 +1,4 @@
-import { Button } from 'primereact/button';
+import { Button } from '../../components/ui/index.js';
 import { Info, Play } from 'lucide-react';
 import ColumnField from '../../shared/fields/ColumnField.jsx';
 import ColumnMultiField from '../../shared/fields/ColumnMultiField.jsx';
@@ -40,7 +40,7 @@ export default function LookupConfig({ datasets: [a, b], config, onChange, onRun
             Every Excel 1 row is kept. Where two reference rows match almost equally well, the row is marked “Ambiguous” so you can check it. A plain lookup would pick one silently.
           </span>
         </p>
-        <Button label="Run lookup" size="small" icon={<Play size={14} />} disabled={!ready} onClick={onRun} />
+        <Button label="Run lookup" size="sm" icon={<Play size={14} />} disabled={!ready} onClick={onRun} />
       </div>
     </div>
   );

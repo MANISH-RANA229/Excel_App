@@ -1,4 +1,4 @@
-import { MultiSelect } from 'primereact/multiselect';
+import { MultiSelect } from '../../components/ui/index.js';
 
 /** Pick any number of columns of a dataset (shown as chips). `exclude` hides columns chosen elsewhere. */
 export default function ColumnMultiField({ label, dataset, value, onChange, exclude = [], placeholder = 'None', error, hint }) {

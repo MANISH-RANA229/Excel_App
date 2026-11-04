@@ -1,4 +1,4 @@
-import { Button } from 'primereact/button';
+import { Button } from '../components/ui/index.js';
 import { Check, X } from 'lucide-react';
 import { formatCount, formatDuration } from '../core/format.js';
 
@@ -24,7 +24,7 @@ export default function JobProgress({ title, progress, elapsedMs = 0, etaMs = nu
           {variant !== 'dialog' && title && <div className="jp__title">{title}</div>}
           <div className="jp__stage" aria-live="polite">{stage}</div>
         </div>
-        {onCancel && <Button label="Cancel" size="small" text severity="secondary" icon={<X size={14} />} onClick={onCancel} />}
+        {onCancel && <Button label="Cancel" size="sm" text severity="secondary" icon={<X size={14} />} onClick={onCancel} />}
       </div>
 
       <div

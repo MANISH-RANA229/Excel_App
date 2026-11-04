@@ -1,7 +1,4 @@
-import { Button } from 'primereact/button';
-import { Checkbox } from 'primereact/checkbox';
-import { Dropdown } from 'primereact/dropdown';
-import { SelectButton } from 'primereact/selectbutton';
+import { Button, Checkbox, Dropdown, SelectButton } from '../../components/ui/index.js';
 import { Info, Play } from 'lucide-react';
 import ColumnMultiField from '../../shared/fields/ColumnMultiField.jsx';
 import ConfigSection from '../../shared/fields/ConfigSection.jsx';
@@ -38,7 +35,7 @@ export default function DuplicatesConfig({ source, config, onChange, onRun }) {
         <div className="stack">
           <div className="field">
             <span>Matching</span>
-            <SelectButton value={config.mode} options={MODES} onChange={(e) => e.value && set({ mode: e.value })} allowEmpty={false} />
+            <SelectButton value={config.mode} options={MODES} onChange={(e) => e.value && set({ mode: e.value })} unselectable={false} />
           </div>
           <label className="field">
             <span>Which row to keep in each group</span>
@@ -70,7 +67,7 @@ export default function DuplicatesConfig({ source, config, onChange, onRun }) {
           <Info size={14} aria-hidden="true" />
           <span>{n.toLocaleString()} rows will be checked. Nothing is deleted from your file; you review the groups and then download a cleaned copy.</span>
         </p>
-        <Button label="Find duplicates" size="small" icon={<Play size={14} />} disabled={!ready} onClick={onRun} />
+        <Button label="Find duplicates" size="sm" icon={<Play size={14} />} disabled={!ready} onClick={onRun} />
       </div>
     </div>
   );

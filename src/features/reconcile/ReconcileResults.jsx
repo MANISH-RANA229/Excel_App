@@ -1,8 +1,7 @@
 import { useDeferredValue, useMemo, useState } from 'react';
-import { Button } from 'primereact/button';
+import { Button, InputText } from '../../components/ui/index.js';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
-import { InputText } from 'primereact/inputtext';
 import { RotateCcw, Search, X } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
 import { columnIndex, columnTexts } from '../../core/dataset/dataset.js';
@@ -21,6 +20,7 @@ const MAX_LINES_SHOWN = 25;
 /** Expanded item: the lines each file contributed (one each in line mode, many in "total per reference"). */
 function Lines({ i, result, ctx }) {
   const block = (label, ds, cfg, start, rows, amounts) => {
+    if (!ds || !result || !result[rows] || !result[start]) return null;
     const all = Array.from(result[rows].subarray(result[start][i], result[start][i + 1]));
     if (!all.length) return <div><span className="wd__key">{label}</span><span className="muted">no rows</span></div>;
     const shown = all.slice(0, MAX_LINES_SHOWN);
@@ -28,94 +28,129 @@ function Lines({ i, result, ctx }) {
       <div>
         <span className="wd__key">{label}</span>
         <table className="members">
-          <thead><tr><th className="num">Row</th>{cfg.key && <th>Reference</th>}<th className="num">Amount</th>{cfg.date && <th>Date</th>}</tr></thead>
+          <thead><tr><th className="num">Row</th><th>Reference</th><th className="num">Amount</th><th>Date</th></tr></thead>
           <tbody>
-            {shown.map((r) => (
-              <tr key={r}>
-                <td className="num">{ds.rowNums[r]}</td>
-                {cfg.key && <td>{ds.text[columnIndex(ds, cfg.key)][r]}</td>}
-                <td className="num">{money(amounts[r])}</td>
-                {cfg.date && <td>{ds.text[columnIndex(ds, cfg.date)][r]}</td>}
+            {shown.map((row) => (
+              <tr key={row}>
+                <td className="num">{ds?.rowNums?.[row] ?? (row + 1)}</td>
+                <td><span className="cell clip" title={cfg?.key ? ds?.text?.[columnIndex(ds, cfg.key)]?.[row] : ''}>{cfg?.key ? ds?.text?.[columnIndex(ds, cfg.key)]?.[row] : '—'}</span></td>
+                <td className="num">{amounts ? money(amounts[row]) : '—'}</td>
+                <td>{cfg?.date ? ds?.text?.[columnIndex(ds, cfg.date)]?.[row] : '—'}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {all.length > shown.length && <span className="muted">… and {(all.length - shown.length).toLocaleString()} more lines</span>}
+        {all.length > MAX_LINES_SHOWN && <span className="muted">… and {all.length - MAX_LINES_SHOWN} more rows</span>}
       </div>
     );
   };
   return (
-    <div className="wd">
-      <div className="wd__texts">
-        {block('Excel 1', ctx.a, ctx.config.a, 'startA', 'rowsA', result.amountA)}
-        {block('Excel 2', ctx.b, ctx.config.b, 'startB', 'rowsB', result.amountB)}
-      </div>
+    <div className="wd wd__texts">
+      {block('Excel 1 lines', ctx?.a, ctx?.config?.a, 'startA', 'rowsA', ctx?.amountsA)}
+      {block('Excel 2 lines', ctx?.b, ctx?.config?.b, 'startB', 'rowsB', ctx?.amountsB)}
     </div>
   );
 }
 
 export default function ReconcileResults({ result, ctx, ms, onRestart }) {
-  const { a, b, config } = ctx;
+  const { a, b, config = { mode: 'line' } } = ctx || {};
   const [group, setGroup] = useState(null);
   const [search, setSearch] = useState('');
   const query = useDeferredValue(search.trim().toLowerCase());
-  const summary = useMemo(() => summarizeRecon(result), [result]);
-  const g = summary.groups;
-  const keyA = config.a.key ? columnTexts(a, config.a.key) : null;
-  const keyB = config.b.key ? columnTexts(b, config.b.key) : null;
 
-  const refOf = (i) => (keyA && result.repA[i] >= 0 ? keyA[result.repA[i]] : keyB && result.repB[i] >= 0 ? keyB[result.repB[i]] : '');
-  const accept = (i) => (group == null || STATUSES[result.status[i]].group === group) && (!query || refOf(i).toLowerCase().includes(query));
-  const getRow = (i) => ({
-    i, status: result.status[i], ref: refOf(i), how: PASS_LABELS[result.pass[i]] ?? '',
-    aRow: result.repA[i] >= 0 ? a.rowNums[result.repA[i]] : null, aAmount: result.sumA[i],
-    bRow: result.repB[i] >= 0 ? b.rowNums[result.repB[i]] : null, bAmount: result.sumB[i], diff: result.diff[i],
-    lines: config.mode === 'sum' ? `${result.countA[i]} / ${result.countB[i]}` : '',
-  });
-  const amountCell = (key) => (r) => <span className="num">{money(r[key])}</span>;
+  const summary = useMemo(() => (result ? summarizeRecon(result) : {
+    groups: { matched: { count: 0, sumA: 0, sumB: 0 }, probable: { count: 0, sumA: 0, sumB: 0 }, difference: { count: 0, net: 0 }, onlyA: { count: 0, sumA: 0 }, onlyB: { count: 0, sumB: 0 } },
+    unreconciled: 0,
+    totals: { noAmountA: 0, noAmountB: 0 },
+  }), [result]);
+  const g = summary.groups;
+
+  const keyText = (i) => result?.keyA?.[i] || result?.keyB?.[i] || '';
+  const accept = (i) => {
+    if (group && result?.status && STATUSES[result.status[i]]?.group !== group) return false;
+    if (!query) return true;
+    return keyText(i).toLowerCase().includes(query);
+  };
+
+  const getRow = (i) => {
+    const st = result?.status?.[i] ?? 0;
+    const meta = STATUSES[st] || { label: 'Unknown', group: 'unknown', color: { bg: '#eee', fg: '#333' } };
+    const diff = result?.diff?.[i] ?? 0;
+    const rowA = result?.startA && result.startA[i + 1] - result.startA[i] === 1 ? (a?.rowNums?.[result.rowsA[result.startA[i]]] ?? result.rowsA[result.startA[i]]) : null;
+    const rowB = result?.startB && result.startB[i + 1] - result.startB[i] === 1 ? (b?.rowNums?.[result.rowsB[result.startB[i]]] ?? result.rowsB[result.startB[i]]) : null;
+    return {
+      i,
+      key: keyText(i),
+      status: meta.label,
+      statusGroup: meta.group,
+      color: meta.color,
+      pass: result?.pass ? (PASS_LABELS[result.pass[i]] ?? '') : '',
+      amountA: result?.hasAmountA?.[i] ? money(result.amountA[i]) : '—',
+      amountB: result?.hasAmountB?.[i] ? money(result.amountB[i]) : '—',
+      diff: diff ? money(diff) : '—',
+      rawDiff: diff,
+      rowA,
+      rowB,
+      linesA: result?.startA ? result.startA[i + 1] - result.startA[i] : 0,
+      linesB: result?.startB ? result.startB[i + 1] - result.startB[i] : 0,
+    };
+  };
+
   const columns = [
-    { expander: true, className: 'col-expander' },
-    { field: 'status', header: 'Status', sortable: true, className: 'col-status', body: (r) => { const s = STATUSES[r.status]; return <span className="band-tag" style={{ background: s.bg, color: s.fg }}><strong>{s.label}</strong></span>; } },
-    { field: 'ref', header: 'Reference', sortable: true, body: (r) => <span className="cell" title={r.ref}>{r.ref || <span className="muted">—</span>}</span> },
-    { field: 'aRow', header: 'Excel 1 row', sortable: true, className: 'rownum', body: (r) => r.aRow ?? '—' },
-    { field: 'aAmount', header: 'Excel 1 amount', sortable: true, className: 'num', body: amountCell('aAmount') },
-    { field: 'bRow', header: 'Excel 2 row', sortable: true, className: 'rownum', body: (r) => r.bRow ?? '—' },
-    { field: 'bAmount', header: 'Excel 2 amount', sortable: true, className: 'num', body: amountCell('bAmount') },
-    { field: 'diff', header: 'Difference', sortable: true, className: 'num', body: (r) => <span className={`num${r.diff ? ' is-diff' : ''}`}>{money(r.diff)}</span> },
-    ...(config.mode === 'sum' ? [{ field: 'lines', header: 'Lines 1 / 2', className: 'rownum' }] : []),
-    { field: 'how', header: 'How matched', sortable: true, body: (r) => <span className="cell muted" title={r.how}>{r.how}</span> },
+    { field: 'key', header: 'Reference', sortable: true, body: (r) => <span className="clip" title={r.key}><strong>{r.key || <span className="muted">(no reference)</span>}</strong></span> },
+    {
+      field: 'status', header: 'Status', sortable: true, className: 'col-status', style: { width: '1%' },
+      body: (r) => <span className="band-tag" style={{ background: r.color.bg, color: r.color.fg }}>{r.status}</span>,
+    },
+    { field: 'pass', header: 'Matched on', sortable: true, style: { width: '1%' }, body: (r) => <span className="muted">{r.pass}</span> },
+    { field: 'amountA', header: 'Excel 1', sortable: true, className: 'num', style: { width: '1%' } },
+    { field: 'amountB', header: 'Excel 2', sortable: true, className: 'num', style: { width: '1%' } },
+    {
+      field: 'diff', header: 'Difference', sortable: true, className: 'num', style: { width: '1%' },
+      body: (r) => (r.rawDiff ? <strong className="is-diff">{r.diff}</strong> : <span className="muted">—</span>),
+    },
+    { field: 'rowA', header: config.mode === 'sum' ? 'Lines 1' : 'Row 1', sortable: true, className: 'rownum', style: { width: '1%' }, body: (r) => (config.mode === 'sum' ? r.linesA || '—' : r.rowA ?? '—') },
+    { field: 'rowB', header: config.mode === 'sum' ? 'Lines 2' : 'Row 2', sortable: true, className: 'rownum', style: { width: '1%' }, body: (r) => (config.mode === 'sum' ? r.linesB || '—' : r.rowB ?? '—') },
   ];
+
   const sorters = {
-    status: (i) => result.status[i], ref: refOf, how: (i) => result.pass[i],
-    aRow: (i) => (result.repA[i] >= 0 ? a.rowNums[result.repA[i]] : 2 ** 31), bRow: (i) => (result.repB[i] >= 0 ? b.rowNums[result.repB[i]] : 2 ** 31),
-    aAmount: (i) => (Number.isNaN(result.sumA[i]) ? -Infinity : result.sumA[i]), bAmount: (i) => (Number.isNaN(result.sumB[i]) ? -Infinity : result.sumB[i]),
-    diff: (i) => (Number.isNaN(result.diff[i]) ? -Infinity : Math.abs(result.diff[i])),
+    key: (i) => keyText(i).toLowerCase(),
+    status: (i) => result?.status?.[i] ?? 0,
+    pass: (i) => result?.pass?.[i] ?? 0,
+    amountA: (i) => (result?.hasAmountA?.[i] ? result.amountA[i] : -Infinity),
+    amountB: (i) => (result?.hasAmountB?.[i] ? result.amountB[i] : -Infinity),
+    diff: (i) => Math.abs(result?.diff?.[i] ?? 0),
+    rowA: (i) => (result?.startA && result.startA[i + 1] > result.startA[i] ? (a?.rowNums?.[result.rowsA[result.startA[i]]] ?? result.rowsA[result.startA[i]]) : Infinity),
+    rowB: (i) => (result?.startB && result.startB[i + 1] > result.startB[i] ? (b?.rowNums?.[result.rowsB[result.startB[i]]] ?? result.rowsB[result.startB[i]]) : Infinity),
   };
 
   const toolbar = ({ total, count }) => (
     <div className="toolbar">
       <IconField iconPosition="left" className="toolbar__search">
         <InputIcon><Search size={14} /></InputIcon>
-        <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search reference" aria-label="Search reference" className="p-inputtext-sm w-full" />
+        <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search reference" aria-label="Search reference" size="sm" className="w-full" />
       </IconField>
       {group && (
         <button type="button" className="filter-chip" onClick={() => setGroup(null)}>
-          {GROUPS.find((x) => x.key === group).label} <X size={12} aria-label="Clear filter" />
+          {GROUPS.find((x) => x.key === group)?.label ?? group} <X size={12} aria-label="Clear filter" />
         </button>
       )}
       <span className="toolbar__count">{total.toLocaleString()} of {count.toLocaleString()} {config.mode === 'sum' ? 'references' : 'items'}</span>
     </div>
   );
 
-  const both = (x) => `${x.count.toLocaleString()} · ${money(x.sumA || x.sumB)}`;
+  const both = (x) => `${(x?.count ?? 0).toLocaleString()} · ${money(x?.sumA || x?.sumB || 0)}`;
+  const nameA = a?.fileName ?? 'Excel 1';
+  const nameB = b?.fileName ?? 'Excel 2';
+
   return (
     <div className="page">
       <PageHeader
         title="Reconciliation results"
-        subtitle={`${a.fileName} ↔ ${b.fileName} · ${config.mode === 'sum' ? 'total per reference' : 'line by line'} · ${formatDuration(ms)}`}
+        subtitle={`${nameA} ↔ ${nameB} · ${config.mode === 'sum' ? 'total per reference' : 'line by line'} · ${formatDuration(ms)}`}
         actions={(
           <>
-            <Button label="New reconciliation" size="small" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
+            <Button label="New reconciliation" size="sm" text severity="secondary" icon={<RotateCcw size={14} />} onClick={onRestart} />
             <ExportButton
               label="Download report"
               buildSpec={() => buildReconcileExport(result, { a, b, cfgA: config.a, cfgB: config.b, mode: config.mode, description: describeConfig(config) })}
@@ -129,7 +164,7 @@ export default function ReconcileResults({ result, ctx, ms, onRestart }) {
           items={[
             ['Matched', both(g.matched)],
             ['Probable', both(g.probable)],
-            ['Differences', `${g.difference.count.toLocaleString()} · net ${money(g.difference.net)}`],
+            ['Differences', `${(g.difference?.count ?? 0).toLocaleString()} · net ${money(g.difference?.net ?? 0)}`],
             ['Only in Excel 1', both(g.onlyA)],
             ['Only in Excel 2', both(g.onlyB)],
             ['Unreconciled (1 − 2)', money(summary.unreconciled)],
@@ -140,17 +175,17 @@ export default function ReconcileResults({ result, ctx, ms, onRestart }) {
             label="Filter by outcome"
             active={group}
             onSelect={setGroup}
-            items={GROUPS.map((x) => ({ key: x.key, label: x.label, count: g[x.key].count, color: x.color }))}
+            items={GROUPS.map((x) => ({ key: x.key, label: x.label, count: g[x.key]?.count ?? 0, color: x.color }))}
           />
-          {(summary.totals.noAmountA > 0 || summary.totals.noAmountB > 0) && (
-            <small className="muted">Rows with no readable amount cannot be matched: Excel 1 {summary.totals.noAmountA.toLocaleString()} · Excel 2 {summary.totals.noAmountB.toLocaleString()}.</small>
+          {((summary.totals?.noAmountA ?? 0) > 0 || (summary.totals?.noAmountB ?? 0) > 0) && (
+            <small className="muted">Rows with no readable amount cannot be matched: Excel 1 {(summary.totals.noAmountA ?? 0).toLocaleString()} · Excel 2 {(summary.totals.noAmountB ?? 0).toLocaleString()}.</small>
           )}
         </div>
       </div>
 
       <div className="card table-card">
         <GridTable
-          count={result.n}
+          count={result?.n ?? 0}
           getRow={getRow}
           columns={columns}
           accept={accept}
