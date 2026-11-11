@@ -128,8 +128,14 @@ export default function SplitResults({ result, ctx, ms, onRestart }) {
         </div>
       </div>
 
+      {groups > MAX_GROUPS && (
+        <Message severity="error" className="w-full" text={`${groups.toLocaleString()} different values found; at most ${MAX_GROUPS.toLocaleString()} can be exported. Untick some, or split by a column with fewer values.`} />
+      )}
       {groups > MAX_GROUPS_WARN && groups <= MAX_GROUPS && (
         <Message severity="warn" className="w-full" text={`Splitting into ${groups.toLocaleString()} files can take a while to download and extract.`} />
+      )}
+      {output === 'workbook' && included.length > 100 && (
+        <Message severity="warn" className="w-full" text="Workbooks with more than 100 sheets are slow to open in Excel. A ZIP of separate files is usually easier." />
       )}
 
       <div className="card table-card">

@@ -53,10 +53,10 @@ export default function ResultsView({ result, ms, ctx, onRestart }) {
     const bi = result?.b?.[i] ?? -1;
     const aText = textA(i);
     const bText = textB(i);
-    const wordsA = tokenize(aText);
-    const wordsB = tokenize(bText);
-    const explanation = bi >= 0 ? explainPair(wordsA, wordsB) : null;
+    // explainPair takes the two cell texts (it tokenizes them itself)
+    const explanation = explainPair(aText, bText);
     return {
+      emptyA: tokenize(aText).length === 0,
       index: i,
       aRowNum: dsA?.rowNums?.[ai] ?? ai + 1,
       bRowNum: bi >= 0 ? (dsB?.rowNums?.[bi] ?? bi + 1) : null,
@@ -83,21 +83,23 @@ export default function ResultsView({ result, ms, ctx, onRestart }) {
       style: { width: '45%' },
       body: ({ aText, explanation }) => (
         <span className="cell clip" title={aText}>
-          {explanation ? <HighlightedText text={aText} sets={highlightSets(explanation, 'a')} /> : aText}
+          <HighlightedText text={aText} sets={highlightSets(explanation, 'a')} />
         </span>
       ),
     },
-    { field: 'bRowNum', header: 'Row', sortable: true, style: { width: '1%' }, className: 'rownum' },
+    { field: 'bRowNum', header: 'Row', sortable: true, style: { width: '1%' }, className: 'rownum', body: (r) => r.bRowNum ?? '—' },
     {
       field: 'bText',
       header: colB,
       sortable: true,
       style: { width: '45%' },
-      body: ({ bText, explanation }) => (
-        <span className="cell clip" title={bText}>
-          {explanation ? <HighlightedText text={bText} sets={highlightSets(explanation, 'b')} /> : <span className="muted">No matching row</span>}
-        </span>
-      ),
+      body: ({ bText, explanation, bi, emptyA }) => (bi < 0
+        ? <span className="muted">{emptyA ? 'Excel 1 cell is empty' : 'No matching row'}</span>
+        : (
+          <span className="cell clip" title={bText}>
+            <HighlightedText text={bText} sets={highlightSets(explanation, 'b')} />
+          </span>
+        )),
     },
     {
       field: 'pct',
@@ -107,6 +109,7 @@ export default function ResultsView({ result, ms, ctx, onRestart }) {
       className: 'col-match num',
       body: ({ pct }) => <BandTag pct={pct} />,
     },
+    ...(topK > 1 ? [{ field: 'rank', header: 'Rank', sortable: true, style: { width: '1%' }, className: 'col-rank' }] : []),
   ];
 
   const sorters = {
@@ -115,6 +118,7 @@ export default function ResultsView({ result, ms, ctx, onRestart }) {
     bRowNum: (i) => (result?.b && result.b[i] >= 0 ? (dsB?.rowNums ? dsB.rowNums[result.b[i]] : result.b[i]) : NO_MATCH_ROW),
     bText: (i) => (result?.b && result.b[i] >= 0 ? textB(i).toLowerCase() : '\uffff'),
     pct: (i) => result?.pct?.[i] ?? 0,
+    rank: (i) => result?.rank?.[i] ?? 1,
   };
 
   const headerGroup = (
@@ -124,6 +128,7 @@ export default function ResultsView({ result, ms, ctx, onRestart }) {
         <Column header={`Excel 1 · ${nameA}`} colSpan={2} className="group-head" style={{ width: '48%' }} />
         <Column header={`Excel 2 · ${nameB}`} colSpan={2} className="group-head" style={{ width: '48%' }} />
         <Column header="Match" field="pct" sortable rowSpan={2} className="col-match" style={{ width: '1%' }} />
+        {topK > 1 && <Column header="Rank" field="rank" sortable rowSpan={2} className="col-rank" style={{ width: '1%' }} />}
       </Row>
       <Row>
         <Column header="Row" field="aRowNum" sortable headerClassName="rownum" style={{ width: '1%' }} />

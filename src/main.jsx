@@ -1,7 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { PrimeReactProvider } from 'primereact/api';
-import '@fontsource-variable/inter'; // bundled, not fetched from a CDN: the app makes no network requests
+import '@fontsource-variable/geist'; // bundled, not fetched from a CDN: the app makes no network requests
+import '@fontsource-variable/geist-mono';
 import 'primereact/resources/themes/fluent-light/theme.css';
 import './theme/theme.css';
 import './styles.css';

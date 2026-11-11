@@ -3,14 +3,17 @@ import { readFileSync } from 'node:fs';
 import { colors, typography, radii, shadows, transitions } from './tokens.js';
 
 // Verify Token Structures
-assert.equal(colors.brand.primary, '#107C41', 'Brand primary is forest green');
-assert.ok(colors.neutral[900], 'Neutral palette is present');
+assert.equal(colors.brand.primary, '#15804a', 'Brand primary is Excel green');
+assert.ok(colors.brand.accent && colors.text.primary, 'Accent and text colours are present');
+const css = readFileSync(new URL('./theme.css', import.meta.url), 'utf8');
+assert.ok(css.includes("--xl-green: " + colors.brand.primary), 'theme.css --xl-green matches tokens.js');
+assert.ok(css.includes('--bg: ' + colors.surface.canvas), 'theme.css --bg matches tokens.js');
 assert.ok(colors.success.bg, 'Success bg is present');
 assert.ok(colors.warning.bg, 'Warning bg is present');
 assert.ok(colors.danger.base, 'Danger base is present');
 
 // Verify Typography Tokens
-assert.ok(typography.fonts.sans.includes('Inter'), 'Sans font uses Inter');
+assert.ok(typography.fonts.sans.includes('Geist'), 'Sans font uses Geist (same as the landing page)');
 assert.ok(typography.fontFeatures.includes('tnum'), 'Font features include tabular numbers');
 assert.ok(typography.sizes.base, 'Base font size is defined');
 

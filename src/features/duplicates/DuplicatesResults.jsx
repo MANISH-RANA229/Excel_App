@@ -64,30 +64,34 @@ function Members({ row, result, ds, keyColumns = [], onKeep }) {
 
 export default function DuplicatesResults({ result, ctx, ms, onRestart }) {
   const { ds, config = { keyColumns: [], mode: 'exact', keep: 'first' } } = ctx || {};
-  const { keyColumns = [] } = config;
+  // the Tool already dropped key columns that are no longer in the file
+  const keyColumns = ctx?.keyColumns ?? config.keyColumns ?? [];
   const keyIdxs = useMemo(() => (ds ? keyColumns.map((c) => columnIndex(ds, c)) : []), [ds, keyColumns]);
   const [output, setOutput] = useState('remove');
-  const [decisions, setDecisions] = useState({}); // g -> { keptRow?, ignored? }
+  // applyDecisions / buildDuplicatesExport expect { keepOverride: Map<g,row>, ignored: Set<g> }
+  const [keepOverride, setKeepOverride] = useState(() => new Map());
+  const [ignoredGroups, setIgnoredGroups] = useState(() => new Set());
   const [search, setSearch] = useState('');
   const [version, setVersion] = useState(0);
   const query = useDeferredValue(search.trim().toLowerCase());
 
-  const stats = useMemo(() => (result ? applyDecisions(result, decisions) : { groups: 0, rowsInGroups: 0, toRemove: 0, unique: 0 }), [result, decisions]);
-  const keyText = (row) => keyIdxs.map((c) => (c >= 0 && ds?.text?.[c] ? ds.text[c][row] : '')).join(' · ');
+  const decisions = useMemo(() => ({ keepOverride, ignored: ignoredGroups }), [keepOverride, ignoredGroups]);
+  const stats = useMemo(() => (result ? applyDecisions(result, decisions).stats : { groups: 0, rowsInGroups: 0, toRemove: 0, unique: 0 }), [result, decisions]);
+  const keyText = (row) => keyIdxs.map((c) => (c >= 0 && ds?.text?.[c] ? ds.text[c][row] : '')).filter((t) => t !== '').join(' · ');
 
-  const keptOf = (g) => decisions[g]?.keptRow ?? result?.keptRow?.[g];
-  const chooseKeep = (g, keptRow) => {
-    setDecisions((d) => ({ ...d, [g]: { ...d[g], keptRow } }));
+  const keptOf = (g) => keepOverride.get(g) ?? result?.keep?.[g];
+  const chooseKeep = (g, row) => {
+    setKeepOverride((m) => { const next = new Map(m); if (row === result?.keep?.[g]) next.delete(g); else next.set(g, row); return next; });
     setVersion((v) => v + 1);
   };
   const toggleIgnored = (g) => {
-    setDecisions((d) => ({ ...d, [g]: { ...d[g], ignored: !(d[g]?.ignored ?? false) } }));
+    setIgnoredGroups((s) => { const next = new Set(s); if (next.has(g)) next.delete(g); else next.add(g); return next; });
     setVersion((v) => v + 1);
   };
 
   const getRow = (g) => {
     const k = keptOf(g);
-    const ignored = decisions[g]?.ignored ?? false;
+    const ignored = ignoredGroups.has(g);
     return {
       g,
       id: g + 1,

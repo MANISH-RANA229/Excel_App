@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
-import { ChevronRight, FileSpreadsheet, Info, Menu, ShieldCheck } from 'lucide-react';
+import { ChevronRight, Info, Menu, ShieldCheck } from 'lucide-react';
+import Logo from '../components/brand/Logo.jsx';
 import HeaderSearch from './HeaderSearch.jsx';
 
 // crumbs = [{ label, href? | onClick? }]; the last one is the current page. Hash links: useHashRoute turns "#/files" into the Files page.
@@ -11,9 +12,7 @@ export default function GlobalHeader({ crumbs, nav, onNavigate, onMenu, infoActi
         <Menu size={18} />
       </button>
       <a className="gheader__brand" href="#/files" aria-label="Excel Suite, go to Files">
-        <span className="gheader__logo" aria-hidden="true"><FileSpreadsheet size={20} /></span>
-        <span className="gheader__name">Excel Suite</span>
-        <span className="gheader__pro">PRO</span>
+        <Logo size={28} tag="PRO" />
       </a>
       <span className="gheader__divider" aria-hidden="true" />
       {crumbs && (

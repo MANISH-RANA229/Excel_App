@@ -106,6 +106,8 @@ export default function CleanerResults({ result, ctx, ms, onRestart }) {
         </label>
       </div>
 
+      {(log.count ?? 0) > shown && <Message severity="info" className="w-full" text={`Showing the first ${shown.toLocaleString()} of ${log.count.toLocaleString()} changes. The downloaded file has every change applied; its Change log sheet has the same limit.`} />}
+
       <div className="card table-card">
         <GridTable
           count={shown}
