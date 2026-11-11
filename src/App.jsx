@@ -106,7 +106,7 @@ export default function App() {
       </AppShell>
       )}
       <JobDialog {...loader.job} />
-      <WelcomeModal visible={welcome} onClose={() => setWelcome(false)} onLearnMore={() => navigate('info')} />
+      <WelcomeModal visible={welcome && !isLanding}onClose={() => setWelcome(false)} onLearnMore={() => navigate('info')} />
     </WorkspaceContext.Provider>
   );
 }

@@ -1,77 +1,88 @@
 /**
- * AxelSuite Theme & Design System Stylesheet
+ * Excel Suite theme: dark, one Excel-green accent, Geist. The single source of the CSS variables (see tokens.js).
  * Integrates CSS variables, typography improvements, and component styling.
  */
 
 :root {
-  /* Typography */
-  --font-family: 'Inter Variable', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, 'Cascadia Mono', 'SFMono-Regular', Consolas, monospace;
-  --font-features: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'cv11' 1, 'tnum' 1;
+  color-scheme: dark;
 
-  /* Brand Palette - Excel Forest Green */
-  --xl-green: #107C41;
-  --xl-green-hover: #0D6A37;
-  --xl-green-active: #0A552C;
-  --xl-green-dark: #185C37;
-  --xl-green-soft: #D1E7DD;
-  --xl-green-tint: #EFF7F2;
-  --xl-green-subtle: #F6FAF7;
+  /* Typography: the same faces as the landing page (bundled, no CDN) */
+  --font-family: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --font-features: 'tnum' 1;
 
-  /* Text & Neutrals */
-  --text: #0F172A;
-  --text-2: #334155;
-  --text-muted: #5B6A80;
-  --text-dim: #94A3B8;
+  /* Brand: Excel green. --xl-green is a fill (white text on it passes AA); --accent is green for text and icons on dark. */
+  --xl-green: #15804a;
+  --xl-green-hover: #1a9256;
+  --xl-green-active: #12703f;
+  --xl-green-dark: #74e2aa;            /* text on a tinted green surface */
+  --xl-green-soft: rgb(60 207 135 / 0.28); /* border of a tinted green surface */
+  --xl-green-tint: rgb(33 163 102 / 0.13);
+  --xl-green-subtle: rgb(33 163 102 / 0.06);
+  --accent: #3ccf87;
+  --accent-hover: #5fdb9d;
 
-  /* Borders & Dividers */
-  --border: #E2E8F0;
-  --border-soft: #EEF2F6;
-  --border-strong: #CBD5E1;
-  --border-focus: var(--xl-green);
+  /* Text */
+  --text: #eef2f0;
+  --text-2: #c3ccc7;
+  --text-muted: #8d9993;
+  --text-dim: #74817b;
 
-  /* Backgrounds & Surfaces */
-  --bg: #F6F8FB;
-  --bg-sunken: #F1F5F9;
-  --surface: #FFFFFF;
-  --surface-elevated: #FFFFFF;
+  /* Lines */
+  --border: #26302b;
+  --border-soft: #1d2622;
+  --border-strong: #36433d;
+  --border-focus: var(--accent);
 
-  /* Status & Alerts */
-  --danger: #B3261E;
-  --danger-hover: #941F18;
-  --danger-bg: #FDF3F4;
-  --danger-border: #F8B4B7;
+  /* Surfaces, darkest to lightest */
+  --bg: #0a0e0c;              /* the page, same as the landing page */
+  --bg-sunken: #0e1311;       /* wells inside a card: table heads, footers, bars */
+  --surface: #121815;         /* cards, header, sidebar */
+  --surface-elevated: #171e1b;/* menus, dialogs, popovers */
+  --surface-hover: #1b231f;
+  --surface-active: #222c27;
+  --surface-3: #2a3530;
 
-  --warning-bg: #FEF3C7;
-  --warning-text: #92400E;
-  --warning-border: #FDE68A;
+  /* Status */
+  --danger: #f0716a;
+  --danger-fill: #c43a30;
+  --danger-hover: #d5463b;
+  --danger-bg: rgb(240 113 106 / 0.1);
+  --danger-border: rgb(240 113 106 / 0.32);
+  --success-bg: rgb(60 207 135 / 0.1);
+  --warning: #e8b04e;
+  --warning-bg: rgb(232 176 78 / 0.12);
+  --warning-text: #f1c873;
+  --warning-border: rgb(232 176 78 / 0.32);
+  --info-bg: rgb(96 186 240 / 0.12);
+  --info-text: #8fd0f7;
+  --info-border: rgb(96 186 240 / 0.3);
 
-  --info-bg: #E0F2FE;
-  --info-text: #0369A1;
+  /* Word highlights in results (matched / one-letter typo) and old -> new cells */
+  --match-bg: rgb(60 207 135 / 0.2);
+  --match-fg: #8bebb9;
+  --fuzzy-bg: rgb(232 176 78 / 0.22);
+  --fuzzy-fg: #f4cf82;
+  --old-bg: rgb(240 113 106 / 0.18);
+  --old-fg: #f6a19b;
 
-  /* Excel Matching Colors */
-  --match-bg: #C6EFCE;
-  --match-fg: #006100;
-  --fuzzy-bg: #FFEB9C;
-  --fuzzy-fg: #7F6000;
-
-  /* Layout & Geometry */
-  --header-h: 60px;
-  --sidebar-w: 248px;
+  /* Layout & geometry (design rule: nothing above 7px) */
+  --header-h: 56px;
+  --sidebar-w: 240px;
   --radius: 7px;
   --radius-sm: 5px;
   --radius-xs: 3px;
   --radius-lg: 7px;
 
-  /* Elevation */
-  --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
-  --shadow: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.04);
-  --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.05);
-  --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.08), 0 4px 6px -4px rgb(15 23 42 / 0.04);
-  --focus-ring: 0 0 0 3px rgba(16, 124, 65, 0.15);
-  --focus-ring-danger: 0 0 0 3px rgba(179, 38, 30, 0.15);
+  /* Elevation: on dark, depth comes from lighter surfaces and a hairline, shadows only for floating things */
+  --shadow-xs: none;
+  --shadow: none;
+  --shadow-md: 0 6px 16px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 18px 40px rgb(0 0 0 / 0.5);
+  --focus-ring: 0 0 0 3px rgb(60 207 135 / 0.22);
+  --focus-ring-danger: 0 0 0 3px rgb(240 113 106 / 0.22);
 
-  /* Animation */
+  /* Motion */
   --ease: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --ease-smooth: 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -174,7 +185,7 @@ body {
   font-size: 0.93rem;
   line-height: 1.4;
   color: var(--text);
-  background: var(--surface);
+  background: var(--bg-sunken);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
@@ -190,9 +201,8 @@ body {
 
 .ui-input:focus {
   outline: none;
-  border-color: var(--xl-green);
+  border-color: var(--accent);
   box-shadow: var(--focus-ring);
-  background: #FFFFFF;
 }
 
 .ui-input:disabled {
@@ -286,7 +296,7 @@ body {
   height: 36px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--bg-sunken);
   transition: border-color var(--ease), box-shadow var(--ease);
   display: inline-flex;
   align-items: center;
@@ -304,7 +314,7 @@ body {
 
 .ui-dropdown-wrapper .p-dropdown:not(.p-disabled).p-focus,
 .ui-dropdown-wrapper .p-multiselect:not(.p-disabled).p-focus {
-  border-color: var(--xl-green);
+  border-color: var(--accent);
   box-shadow: var(--focus-ring);
 }
 
@@ -404,14 +414,14 @@ body {
 /* UI Button Variants */
 .ui-button--primary {
   background: var(--xl-green);
-  border-color: var(--xl-green);
+  border-color: var(--accent);
   color: #FFFFFF;
 }
 
 .ui-button--primary:hover:not(:disabled) {
   background: var(--xl-green-hover);
   border-color: var(--xl-green-hover);
-  box-shadow: 0 2px 4px rgb(16 124 65 / 0.2);
+  box-shadow: 0 2px 4px rgb(60 207 135 / 0.12);
 }
 
 .ui-button--primary:active:not(:disabled) {
@@ -453,8 +463,8 @@ body {
 }
 
 .ui-button--danger {
-  background: var(--danger);
-  border-color: var(--danger);
+  background: var(--danger-fill);
+  border-color: var(--danger-fill);
   color: #FFFFFF;
 }
 
@@ -470,8 +480,8 @@ body {
 }
 
 .ui-button--brand-subtle:hover:not(:disabled) {
-  background: #E5F3EB;
-  border-color: var(--xl-green);
+  background: rgb(33 163 102 / 0.2);
+  border-color: var(--accent);
 }
 
 /* UI Button Sizes */
@@ -570,13 +580,13 @@ body {
 
 .ui-badge--success {
   background: var(--match-bg);
-  border-color: #A3D9AE;
+  border-color: var(--xl-green-soft);
   color: var(--match-fg);
 }
 
 .ui-badge--warning {
   background: var(--fuzzy-bg);
-  border-color: #F6DF7D;
+  border-color: var(--warning-border);
   color: var(--fuzzy-fg);
 }
 
@@ -588,7 +598,7 @@ body {
 
 .ui-badge--info {
   background: var(--info-bg);
-  border-color: #BAE6FD;
+  border-color: var(--info-border);
   color: var(--info-text);
 }
 
@@ -658,10 +668,10 @@ body {
 
 .p-dropdown-panel,
 .p-multiselect-panel {
-  background: var(--surface) !important;
+  background: var(--surface-elevated) !important;
   border: 1px solid var(--border-strong) !important;
   border-radius: var(--radius) !important;
-  box-shadow: 0 10px 25px -5px rgb(15 23 42 / 0.12), 0 8px 10px -6px rgb(15 23 42 / 0.08) !important;
+  box-shadow: var(--shadow-lg) !important;
   padding: 4px !important;
   overflow: hidden !important;
 }
@@ -720,8 +730,8 @@ body {
 
 .p-dropdown-filter-container .p-dropdown-filter:focus,
 .p-multiselect-filter-container .p-multiselect-filter:focus {
-  border-color: var(--xl-green) !important;
-  box-shadow: 0 0 0 2px rgba(16, 124, 65, 0.15) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgb(60 207 135 / 0.22) !important;
 }
 
 /* MultiSelect Chip Tokens */
@@ -748,13 +758,13 @@ body {
 /* Modern Dialog Polish */
 .p-dialog {
   border: 1px solid var(--border-strong) !important;
-  box-shadow: 0 20px 25px -5px rgb(15 23 42 / 0.15), 0 8px 10px -6px rgb(15 23 42 / 0.1) !important;
+  box-shadow: var(--shadow-lg) !important;
   overflow: hidden !important;
 }
 
 .p-dialog .p-dialog-header {
   padding: 16px 20px !important;
-  background: var(--surface) !important;
+  background: var(--surface-elevated) !important;
   border-bottom: 1px solid var(--border-soft) !important;
 }
 
@@ -766,7 +776,7 @@ body {
 
 .p-dialog .p-dialog-content {
   padding: 20px !important;
-  background: var(--surface) !important;
+  background: var(--surface-elevated) !important;
 }
 
 .p-dialog .p-dialog-footer {

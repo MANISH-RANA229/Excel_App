@@ -44,7 +44,9 @@ export default function LookupResults({ result, ctx, ms, onRestart }) {
     const j = result?.b?.[i] ?? -1;
     const aKey = textA[i] ?? '';
     const bKey = j >= 0 ? (textB[j] ?? '') : '';
-    const words = j >= 0 ? explainPair(aKey, bKey) : null;
+    const words = explainPair(aKey, bKey);
+    const st = result?.status?.[i] ?? 0;
+    const pulls = st !== NOT_FOUND && j >= 0; // a row below the threshold pulls nothing in
     return {
       i,
       j,
@@ -53,13 +55,14 @@ export default function LookupResults({ result, ctx, ms, onRestart }) {
       aKey,
       bKey,
       pct: result?.pct?.[i] ?? 0,
-      status: result?.status?.[i] ?? 0,
-      pulled: pullIdx.map((k) => (j >= 0 && k >= 0 && b?.text?.[k] ? b.text[k][j] : '')),
+      status: st,
+      pulled: pullIdx.map((k) => (pulls && k >= 0 && b?.text?.[k] ? b.text[k][j] : '')),
       words,
     };
   };
 
   const columns = [
+    { expander: true, className: 'col-expander' },
     { field: 'aRowNum', header: 'Row', sortable: true, style: { width: '1%' }, className: 'rownum' },
     {
       field: 'aKey', header: keyA ?? 'Key A', sortable: true,
@@ -68,17 +71,20 @@ export default function LookupResults({ result, ctx, ms, onRestart }) {
     { field: 'bRowNum', header: 'Ref row', sortable: true, style: { width: '1%' }, className: 'rownum', body: (r) => r.bRowNum ?? '—' },
     {
       field: 'bKey', header: keyB ?? 'Key B', sortable: true,
-      body: ({ bKey, words, j }) => (
-        <span className="cell clip" title={bKey}>
-          {j >= 0 ? (words ? <HighlightedText text={bKey} sets={highlightSets(words, 'b')} /> : bKey) : <span className="muted">Not found</span>}
-        </span>
-      ),
+      body: ({ bKey, words, j, status: s }) => (j < 0
+        ? <span className="muted">No similar row</span>
+        : (
+          <span className={`cell clip${s === NOT_FOUND ? ' muted' : ''}`} title={bKey}>
+            {s === NOT_FOUND ? <>nearest: {bKey}</> : <HighlightedText text={bKey} sets={highlightSets(words, 'b')} />}
+          </span>
+        )),
     },
+    { field: 'pct', header: 'Match', sortable: true, className: 'col-match', style: { width: '1%' }, body: (r) => <BandTag pct={r.pct} /> },
     {
       field: 'status', header: 'Status', sortable: true, className: 'col-status', style: { width: '1%' },
-      body: ({ status: s, pct }) => {
+      body: ({ status: s }) => {
         const meta = STATUSES[s] || { label: 'Unknown' };
-        return <BandTag pct={pct} label={meta.label} />;
+        return <span className="band-tag" style={{ background: meta.bg, color: meta.fg }}><strong>{meta.label}</strong></span>;
       },
     },
     ...(pull || []).map((c, k) => ({
@@ -92,8 +98,9 @@ export default function LookupResults({ result, ctx, ms, onRestart }) {
     aKey: (i) => (textA[i] ?? '').toLowerCase(),
     bRowNum: (i) => (result?.b && result.b[i] >= 0 ? (b?.rowNums?.[result.b[i]] ?? result.b[i]) : Infinity),
     bKey: (i) => (result?.b && result.b[i] >= 0 ? (textB[result.b[i]] ?? '').toLowerCase() : '\uffff'),
+    pct: (i) => result?.pct?.[i] ?? 0,
     status: (i) => result?.status?.[i] ?? 0,
-    ...Object.fromEntries((pull || []).map((_, k) => [`pull_${k}`, (i) => (result?.b && result.b[i] >= 0 && pullIdx[k] >= 0 && b?.text?.[pullIdx[k]] ? b.text[pullIdx[k]][result.b[i]].toLowerCase() : '')])),
+    ...Object.fromEntries((pull || []).map((_, k) => [`pull_${k}`, (i) => (result?.b && result.b[i] >= 0 && result.status[i] !== NOT_FOUND && pullIdx[k] >= 0 && b?.text?.[pullIdx[k]] ? String(b.text[pullIdx[k]][result.b[i]] ?? '').toLowerCase() : '')])),
   };
 
   const toolbar = ({ total, count }) => (

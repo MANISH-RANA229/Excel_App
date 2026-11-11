@@ -4,7 +4,6 @@ import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { RotateCcw, Search, X } from 'lucide-react';
 import PageHeader from '../../layout/PageHeader.jsx';
-import { columnTexts } from '../../core/dataset/dataset.js';
 import { formatDuration } from '../../core/format.js';
 import ExportButton from '../../shared/results/ExportButton.jsx';
 import GridTable from '../../shared/results/GridTable.jsx';
@@ -36,7 +35,10 @@ export default function KeyCompareResults({ result, ctx, ms, onRestart }) {
   const keyColsA = useMemo(() => (a?.columns ? (config.keys || []).map((k) => a.columns.indexOf(k.a)) : []), [config.keys, a]);
   const keyColsB = useMemo(() => (b?.columns ? (config.keys || []).map((k) => b.columns.indexOf(k.b)) : []), [config.keys, b]);
   const pairs = useMemo(() => (a && b ? pairsOf(compared, a, b) : []), [compared, a, b]);
-  const eq = useMemo(() => makeEqual(config.values, config.tolerance), [config.values, config.tolerance]);
+  const eq = useMemo(() => makeEqual({ ...config.values, tolerance: config.tolerance }), [config.values, config.tolerance]);
+  // changedColumns returns indexes into `pairs`; turn them into { name, from, to } for display.
+  const changesOf = (ra, rb) => changedColumns(pairs, eq, ra, rb)
+    .map((p) => ({ name: pairs[p].name, from: pairs[p].a.text[ra], to: pairs[p].b.text[rb] }));
 
   const keyText = (i) => {
     if (!result?.rowA || !result?.rowB) return '';
@@ -56,7 +58,7 @@ export default function KeyCompareResults({ result, ctx, ms, onRestart }) {
     const st = result?.status?.[i] ?? SAME;
     const ra = result?.rowA?.[i] ?? -1;
     const rb = result?.rowB?.[i] ?? -1;
-    const changes = st === CHANGED && a && b ? changedColumns(pairs, a, b, ra, rb, eq) : [];
+    const changes = st === CHANGED && ra >= 0 && rb >= 0 ? changesOf(ra, rb) : [];
     return {
       index: i,
       status: st,
@@ -70,12 +72,13 @@ export default function KeyCompareResults({ result, ctx, ms, onRestart }) {
   };
 
   const columns = [
+    { expander: true, className: 'col-expander' },
     { field: 'key', header: 'Key', sortable: true, body: (r) => <span className="clip" title={r.key}><strong>{r.key || <span className="muted">(blank key)</span>}</strong></span> },
     {
       field: 'status', header: 'Status', sortable: true, className: 'col-status', style: { width: '1%' },
       body: (r) => {
-        const meta = STATUSES[r.status] || { color: { bg: '#eee', fg: '#333' }, label: 'Unknown' };
-        return <span className="band-tag" style={{ background: meta.color.bg, color: meta.color.fg }}>{meta.label}</span>;
+        const meta = STATUSES[r.status] || { bg: '#eee', fg: '#333', label: 'Unknown' };
+        return <span className="band-tag" style={{ background: meta.bg, color: meta.fg }}>{meta.label}</span>;
       },
     },
     { field: 'rowA', header: 'Excel 1 row', sortable: true, style: { width: '1%' }, className: 'rownum', body: (r) => r.rowA ?? '—' },
@@ -123,11 +126,12 @@ export default function KeyCompareResults({ result, ctx, ms, onRestart }) {
         </div>
       );
     }
+    if (r.status === SAME) return <div className="wd"><span className="muted">{pairs.length ? `All ${pairs.length} compared columns are equal.` : 'Only the key was compared.'}</span></div>;
     const isA = r.status === REMOVED;
     const ds = isA ? a : b;
     const row = isA ? r.ra : r.rb;
-    if (!ds) return null;
-    const rowCells = columnTexts(ds, row);
+    if (!ds || row < 0) return null;
+    const rowCells = (ds.columns || []).map((_, k) => ds.text?.[k]?.[row] ?? '');
     return (
       <div className="wd">
         <table className="members">

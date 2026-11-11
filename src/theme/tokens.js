@@ -1,87 +1,57 @@
 /**
- * AxelSuite Design Tokens
+ * Excel Suite design tokens (dark theme). theme/theme.css mirrors these as CSS variables.
  * Single source of truth for design tokens across the application.
  * Defines colors, typography, spacing, shadows, radii, and transitions.
  */
 
 export const colors = {
-  // Brand - Professional Excel Forest Green
+  // Brand: Excel green. primary is a fill (white text passes AA); accent is the green used for text and icons on dark.
   brand: {
-    primary: '#107C41',
-    hover: '#0D6A37',
-    active: '#0A552C',
-    dark: '#185C37',
-    soft: '#D1E7DD',
-    tint: '#EFF7F2',
-    subtle: '#F6FAF7',
-    surface: '#E7F3EC',
+    primary: '#15804a',
+    hover: '#1a9256',
+    active: '#12703f',
+    accent: '#3ccf87',
+    onTint: '#74e2aa',
+    soft: 'rgb(60 207 135 / 0.28)',
+    tint: 'rgb(33 163 102 / 0.13)',
+    subtle: 'rgb(33 163 102 / 0.06)',
   },
 
-  // Slate Neutral Scale (Crisp, High-Contrast UI)
-  neutral: {
-    50: '#F8FAFC',
-    100: '#F1F5F9',
-    200: '#E2E8F0',
-    300: '#CBD5E1',
-    400: '#94A3B8',
-    500: '#64748B',
-    600: '#475569',
-    700: '#334155',
-    800: '#1E293B',
-    900: '#0F172A',
-    950: '#020617',
+  // Text on the dark surfaces
+  text: {
+    primary: '#eef2f0',
+    secondary: '#c3ccc7',
+    muted: '#8d9993',
+    dim: '#74817b',
   },
 
-  // Semantic Feedback Colors
-  success: {
-    base: '#107C41',
-    bg: '#C6EFCE',
-    text: '#006100',
-    border: '#A3D9AE',
-  },
-  warning: {
-    base: '#D97706',
-    bg: '#FEF3C7',
-    text: '#92400E',
-    border: '#FDE68A',
-  },
-  fuzzy: {
-    bg: '#FFEB9C',
-    text: '#7F6000',
-    border: '#F6DF7D',
-  },
-  danger: {
-    base: '#B3261E',
-    hover: '#941F18',
-    bg: '#FDF3F4',
-    text: '#9C0006',
-    border: '#F8B4B7',
-  },
-  info: {
-    base: '#0284C7',
-    bg: '#E0F2FE',
-    text: '#0369A1',
-    border: '#BAE6FD',
-  },
+  // Semantic feedback (text colour + translucent background + border)
+  success: { base: '#3ccf87', bg: 'rgb(60 207 135 / 0.1)', text: '#8bebb9', border: 'rgb(60 207 135 / 0.28)' },
+  warning: { base: '#e8b04e', bg: 'rgb(232 176 78 / 0.12)', text: '#f1c873', border: 'rgb(232 176 78 / 0.32)' },
+  fuzzy: { bg: 'rgb(232 176 78 / 0.22)', text: '#f4cf82' },
+  danger: { base: '#f0716a', fill: '#c43a30', hover: '#d5463b', bg: 'rgb(240 113 106 / 0.1)', border: 'rgb(240 113 106 / 0.32)' },
+  info: { bg: 'rgb(96 186 240 / 0.12)', text: '#8fd0f7', border: 'rgb(96 186 240 / 0.3)' },
 
-  // Surface & Layout
+  // Surfaces, darkest to lightest (the page matches the landing page)
   surface: {
-    base: '#FFFFFF',
-    sunken: '#F1F5F9',
-    canvas: '#F6F8FB',
-    elevated: '#FFFFFF',
-    border: '#E2E8F0',
-    borderSoft: '#EEF2F6',
-    borderStrong: '#CBD5E1',
+    canvas: '#0a0e0c',
+    sunken: '#0e1311',
+    base: '#121815',
+    elevated: '#171e1b',
+    hover: '#1b231f',
+    active: '#222c27',
+    border: '#26302b',
+    borderSoft: '#1d2622',
+    borderStrong: '#36433d',
   },
 };
 
 export const typography = {
   fonts: {
-    sans: "'Inter Variable', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    mono: "ui-monospace, 'Cascadia Mono', 'SFMono-Regular', Consolas, monospace",
+    sans: "'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    mono: "'Geist Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace",
   },
-  fontFeatures: "'cv02' 1, 'cv03' 1, 'cv04' 1, 'cv11' 1, 'tnum' 1",
+  fontFeatures: "'tnum' 1",
   sizes: {
     xs: '0.79rem',   // ~11px
     sm: '0.86rem',   // ~12px
@@ -121,12 +91,10 @@ export const radii = {
 
 export const shadows = {
   none: 'none',
-  xs: '0 1px 2px 0 rgb(15 23 42 / 0.05)',
-  sm: '0 1px 3px 0 rgb(15 23 42 / 0.07), 0 1px 2px -1px rgb(15 23 42 / 0.06)',
-  md: '0 4px 6px -1px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.06)',
-  lg: '0 10px 15px -3px rgb(15 23 42 / 0.08), 0 4px 6px -4px rgb(15 23 42 / 0.04)',
-  focus: '0 0 0 3px rgba(16, 124, 65, 0.15)',
-  focusDanger: '0 0 0 3px rgba(179, 38, 30, 0.15)',
+  md: '0 6px 16px rgb(0 0 0 / 0.35)',
+  lg: '0 18px 40px rgb(0 0 0 / 0.5)',
+  focus: '0 0 0 3px rgb(60 207 135 / 0.22)',
+  focusDanger: '0 0 0 3px rgb(240 113 106 / 0.22)',
 };
 
 export const transitions = {

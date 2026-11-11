@@ -46,8 +46,8 @@ function Lines({ i, result, ctx }) {
   };
   return (
     <div className="wd wd__texts">
-      {block('Excel 1 lines', ctx?.a, ctx?.config?.a, 'startA', 'rowsA', ctx?.amountsA)}
-      {block('Excel 2 lines', ctx?.b, ctx?.config?.b, 'startB', 'rowsB', ctx?.amountsB)}
+      {block('Excel 1 lines', ctx?.a, ctx?.config?.a, 'startA', 'rowsA', result?.amountA)}
+      {block('Excel 2 lines', ctx?.b, ctx?.config?.b, 'startB', 'rowsB', result?.amountB)}
     </div>
   );
 }
@@ -65,7 +65,13 @@ export default function ReconcileResults({ result, ctx, ms, onRestart }) {
   }), [result]);
   const g = summary.groups;
 
-  const keyText = (i) => result?.keyA?.[i] || result?.keyB?.[i] || '';
+  const keyA = a && config.a?.key ? columnTexts(a, config.a.key) : null;
+  const keyB = b && config.b?.key ? columnTexts(b, config.b.key) : null;
+  const repA = (i) => result?.repA?.[i] ?? -1;
+  const repB = (i) => result?.repB?.[i] ?? -1;
+  const keyText = (i) => (keyA && repA(i) >= 0 ? keyA[repA(i)] : keyB && repB(i) >= 0 ? keyB[repB(i)] : '') ?? '';
+  const num = (arr, i) => arr?.[i] ?? NaN; // sumA / sumB / diff are NaN when that side is missing
+  const rowOf = (ds, rep) => (rep >= 0 ? (ds?.rowNums?.[rep] ?? rep + 1) : null);
   const accept = (i) => {
     if (group && result?.status && STATUSES[result.status[i]]?.group !== group) return false;
     if (!query) return true;
@@ -74,35 +80,38 @@ export default function ReconcileResults({ result, ctx, ms, onRestart }) {
 
   const getRow = (i) => {
     const st = result?.status?.[i] ?? 0;
-    const meta = STATUSES[st] || { label: 'Unknown', group: 'unknown', color: { bg: '#eee', fg: '#333' } };
-    const diff = result?.diff?.[i] ?? 0;
-    const rowA = result?.startA && result.startA[i + 1] - result.startA[i] === 1 ? (a?.rowNums?.[result.rowsA[result.startA[i]]] ?? result.rowsA[result.startA[i]]) : null;
-    const rowB = result?.startB && result.startB[i + 1] - result.startB[i] === 1 ? (b?.rowNums?.[result.rowsB[result.startB[i]]] ?? result.rowsB[result.startB[i]]) : null;
+    const meta = STATUSES[st] || { label: 'Unknown', group: 'unknown', bg: '#eee', fg: '#333' };
+    const diff = num(result?.diff, i);
+    const sumA = num(result?.sumA, i);
+    const sumB = num(result?.sumB, i);
+    const rowA = rowOf(a, repA(i));
+    const rowB = rowOf(b, repB(i));
     return {
       i,
       key: keyText(i),
       status: meta.label,
       statusGroup: meta.group,
-      color: meta.color,
+      color: { bg: meta.bg, fg: meta.fg },
       pass: result?.pass ? (PASS_LABELS[result.pass[i]] ?? '') : '',
-      amountA: result?.hasAmountA?.[i] ? money(result.amountA[i]) : '—',
-      amountB: result?.hasAmountB?.[i] ? money(result.amountB[i]) : '—',
+      amountA: Number.isNaN(sumA) ? '—' : money(sumA),
+      amountB: Number.isNaN(sumB) ? '—' : money(sumB),
       diff: diff ? money(diff) : '—',
       rawDiff: diff,
       rowA,
       rowB,
-      linesA: result?.startA ? result.startA[i + 1] - result.startA[i] : 0,
-      linesB: result?.startB ? result.startB[i + 1] - result.startB[i] : 0,
+      linesA: result?.countA?.[i] ?? 0,
+      linesB: result?.countB?.[i] ?? 0,
     };
   };
 
   const columns = [
+    { expander: true, className: 'col-expander' },
     { field: 'key', header: 'Reference', sortable: true, body: (r) => <span className="clip" title={r.key}><strong>{r.key || <span className="muted">(no reference)</span>}</strong></span> },
     {
       field: 'status', header: 'Status', sortable: true, className: 'col-status', style: { width: '1%' },
       body: (r) => <span className="band-tag" style={{ background: r.color.bg, color: r.color.fg }}>{r.status}</span>,
     },
-    { field: 'pass', header: 'Matched on', sortable: true, style: { width: '1%' }, body: (r) => <span className="muted">{r.pass}</span> },
+    { field: 'pass', header: 'Matched on', sortable: true, style: { width: '1%', whiteSpace: 'nowrap' }, body: (r) => <span className="muted">{r.pass}</span> },
     { field: 'amountA', header: 'Excel 1', sortable: true, className: 'num', style: { width: '1%' } },
     { field: 'amountB', header: 'Excel 2', sortable: true, className: 'num', style: { width: '1%' } },
     {
@@ -117,11 +126,11 @@ export default function ReconcileResults({ result, ctx, ms, onRestart }) {
     key: (i) => keyText(i).toLowerCase(),
     status: (i) => result?.status?.[i] ?? 0,
     pass: (i) => result?.pass?.[i] ?? 0,
-    amountA: (i) => (result?.hasAmountA?.[i] ? result.amountA[i] : -Infinity),
-    amountB: (i) => (result?.hasAmountB?.[i] ? result.amountB[i] : -Infinity),
-    diff: (i) => Math.abs(result?.diff?.[i] ?? 0),
-    rowA: (i) => (result?.startA && result.startA[i + 1] > result.startA[i] ? (a?.rowNums?.[result.rowsA[result.startA[i]]] ?? result.rowsA[result.startA[i]]) : Infinity),
-    rowB: (i) => (result?.startB && result.startB[i + 1] > result.startB[i] ? (b?.rowNums?.[result.rowsB[result.startB[i]]] ?? result.rowsB[result.startB[i]]) : Infinity),
+    amountA: (i) => { const v = num(result?.sumA, i); return Number.isNaN(v) ? -Infinity : v; },
+    amountB: (i) => { const v = num(result?.sumB, i); return Number.isNaN(v) ? -Infinity : v; },
+    diff: (i) => { const v = num(result?.diff, i); return Number.isNaN(v) ? -Infinity : Math.abs(v); },
+    rowA: (i) => (config.mode === 'sum' ? (result?.countA?.[i] ?? 0) : (rowOf(a, repA(i)) ?? 2 ** 31)),
+    rowB: (i) => (config.mode === 'sum' ? (result?.countB?.[i] ?? 0) : (rowOf(b, repB(i)) ?? 2 ** 31)),
   };
 
   const toolbar = ({ total, count }) => (

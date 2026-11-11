@@ -2,14 +2,16 @@
 
 > Give this file to an AI at the start of a new session. It records what the app is, every decision made and why, how the
 > code is organised, how it was verified, what is NOT done, and the traps already hit. Written at the end of the first
-> long build session. Project root: `C:\My Work\Excel_App` (not a git repo). Owner: Manish (Manish.r@nrsconsulting.in).
+> long build session; last updated **2026-11-11** (3D landing page, dark theme for the whole app, new logo, UI bug sweep:
+> see section 14). Project root: `M:\Excel_App`, a git repo (GitHub user MANISH-RANA229; work branch `AntiGravity`, main
+> branch `main`). Older notes below mention `C:\My Work\Excel_App`: same project, earlier location. Owner: Manish (Manish.r@nrsconsulting.in).
 
 ---
 
 ## 1. What the app is
 
 A **frontend-only React app** (no backend, JS only) for working with spreadsheets entirely in the browser. Files never leave
-the device. The user loads up to two Excel/CSV files, picks a tool, configures it, previews results in a compact grid and
+the device. The default route (`#/`) is a 3D scroll-driven landing page; "Open the app" goes to the Files page (`#/files`). The user loads up to two Excel/CSV files, picks a tool, configures it, previews results in a compact grid and
 downloads a colour-coded `.xlsx` (or `.zip`).
 
 Ten tools, in sidebar categories:
@@ -55,9 +57,15 @@ Last state: `npm run check` → **49 check files pass**, `npm run build` OK. `np
   Form controls and UI elements are wrapped in a central reusable library in `src/components/ui/index.js` (`Button`, `Dropdown`, `Select`, `InputText`, `Input`, `Checkbox`, `SelectButton`, `SegmentedControl`, `MultiSelect`, `NumberStepper`, `NumberInput`, `Badge`, `Card`).
   **Rule**: All tools and shared components import from `components/ui/`, never from raw vendor packages directly. If UI styling, accessibility, or behaviour needs to change in the future, changing the component file in `src/components/ui/` updates the entire suite immediately.
   Tokens live in `src/theme/tokens.js` and `src/theme/theme.css` (`--xl-green`, `--xl-green-dark`, `--xl-green-soft`, `--text`, `--radius: 7px`, `--radius-lg: 7px`).
-- **Theme / design system (global, from the user's design board)**: Primary `#107C41`, Secondary `#185C37`, Tertiary `#D1E7DD`, Neutral `#0F172A`
-  (slate greys), font **Inter** (variable, bundled via `@fontsource-variable/inter`, so the app makes no CDN requests). PrimeReact **Fluent** theme (`fluent-light`) is recoloured to the same values by
-  the `THEME_COLORS` map in the Vite plugin in `vite.config.js`. Base font-size 14px for compact density (`html { font-size: 14px }`). Light theme only. Icons: `lucide-react` only (no emoji). Product name: "Excel Suite" + PRO chip.
+- **Theme / design system (changed 2026-11-11: dark, matching the landing page)**: near-black green-tinted surfaces (`--bg #0a0e0c`,
+  cards `--surface #121815`, menus/dialogs `--surface-elevated #171e1b`), one accent: Excel green. Two greens on purpose:
+  `--xl-green #15804a` is a **fill** (buttons, white text on it passes AA) and `--accent #3ccf87` is green **text/icons** on dark.
+  Tinted chips use `--xl-green-tint` (bg) + `--xl-green-soft` (border) + `--xl-green-dark` (text, a light green despite the name).
+  Fonts **Geist** + **Geist Mono** (variable, bundled via `@fontsource-variable/geist` / `geist-mono`, so the app still makes no CDN requests;
+  Inter was removed). Mono is used for anything that is a cell reference, count, figure or small label. PrimeReact **Fluent** theme
+  (`fluent-light`, kept for its compact Office density) is re-pointed at the app's CSS variables by the Vite plugin in `vite.config.js`
+  (section 14). Base font-size 14px (`html { font-size: 14px }`). **Dark theme only** (no light/dark switch). Icons: `lucide-react` only
+  (no emoji). Product name: "Excel Suite" + PRO tag; logo = `components/brand/Logo.jsx`.
 - **Corner radius limit**: Maximum 7px radius on all cards, dialogs, buttons, inputs, chips, tables (`--radius: 7px; --radius-lg: 7px;`). Only round dots, radios, and slider handles stay 50%.
 - **No ExcelJS in the app.** ExcelJS's browser build exports only the in-memory `Workbook`; its streaming writer needs Node's
   `archiver`/`fs`, and the in-memory writer needs >1 GB for 500k rows. So export uses a **custom OOXML writer + streaming ZIP
@@ -107,6 +115,11 @@ components/ui/             Unified, accessible UI components (wrapped vendor con
   Badge.jsx                Status badge and counter pill
   Card.jsx                 Surface container adhering to max 7px border radius
   index.js                 Central export barrel for all UI components
+components/brand/Logo.jsx  The logo: LogoMark (green tile, sheet grid, selected cell with Excel's fill handle) + Logo (mark + "Excel Suite" + tag).
+                           public/favicon.svg is the same drawing: keep them in step.
+pages/LandingPage.jsx      Route `#/` / `#/landing` (the default). 3D scroll page; see section 14. Its CSS is src/landing.css (scoped under `.lp`).
+pages/landing/scene.js     three.js world (lazy chunk): 36×28 instanced cells, one layout per chapter, camera per chapter, rain, drag-to-turn cube.
+pages/landing/content.js   Every chapter's words, stats, formula-bar text (`ref`, `formula`) and which 3D layout (`scene`) it shows.
 core/                      pure JS (+ *.check.js beside each module)
   errors.js                AppError(code,{message,hint,detail}); codes FILE_UNSUPPORTED/ENCRYPTED/CORRUPT/EMPTY, TOO_LARGE, NO_HEADER, BAD_CONFIG,
                            NO_RESULT, EXPORT_FAILED, WORKER_CRASH, CANCELLED, UNKNOWN; serializeError/reviveError/toAppError
@@ -228,7 +241,7 @@ Test approach: pure checks in `src/**/*.check.js` (assert scripts) + real-browse
 4. Password-protected files are detected only by SheetJS error text (`/password|encrypt/`); untested with a real encrypted file. `.xls` verified via signature check only, not with a real legacy file in the UI.
 5. Duplicate "similar" mode caps neighbours per row at 20 (a cluster of 20+ near-identical rows could split); Reconcile amount&date pass scans ≤ 500 equal-amount candidates per row. Both marked with `ponytail:` comments.
 6. Sum-by-reference Reconcile has no fuzzy/probable passes; rows without a reference are listed as "only in" items. Combination (subset-sum) matching is out of scope.
-7. Out of scope on purpose (architecture leaves room): saved presets, per-row review queue for Diff/Lookup, multi-column weighted matching, a user-editable "ignore words" list (Pvt, Ltd), undo history, dark mode, editable colour bands, i18n, README.
+7. Out of scope on purpose (architecture leaves room): saved presets, per-row review queue for Diff/Lookup, multi-column weighted matching, a user-editable "ignore words" list (Pvt, Ltd), undo history, a light-theme switch (the app is dark-only since 2026-11-11), editable colour bands, i18n, README.
 8. Numbers display with the browser locale (the user's shows Indian grouping, e.g. `2,00,000`); amounts use `toLocaleString`.
 
 ## 11. Gotchas already hit (don't repeat)
@@ -256,7 +269,7 @@ Test approach: pure checks in `src/**/*.check.js` (assert scripts) + real-browse
 - **Combine / needs: 0 tools** keep their state across changes of Excel 1/2 because App.jsx keys them by a reset counter, not by the dataset key.
 - **Design rules the user set (2026-10-31):** no corner radius above **7px** anywhere (`--radius` and `--radius-lg` are both 7px; chips use 5-6px; only status dots, radio buttons and the slider handle stay round). `styles.css` has no `999px`/`50%` on anything bigger than a dot; a computed-style audit (every element, radius over 7px) was run on all tool screens and came back empty. The page header is compact on purpose (title 1.5rem + one-line subtitle, about 60px tall) because it is on every screen.
 - **Settings-screen building blocks** (reuse them for the next tool): `shared/fields/ConfigSection.jsx` (title, hint, optional `actions`, `cols={1|2}`; give a child `className="span-2"` to span both columns) inside `<div className="card config config--form">` (max 1080px), ending with `<div className="config__foot">` (hint left, primary button right). Labels are the first `span` of `.field`; hints are `<small className="muted">`; checkbox rows are `.check`; `SelectButton` is restyled globally as a segmented control; column pickers are `.col-picks` tiles; text-link add buttons use `className="btn-add"`; rows with an optional remove button add `has-remove` (`.key-row`, `.measure-row`) so no empty column is reserved. Two-file panels use `.config__sides` / `.side` with the `file-tag` chip. Section grids use a 48px column gap so they line up with the two-file panels. `ColumnField` only renders its "e.g. …" line when it has examples. `GridTable` gives each header the same class as its column (numbers right-aligned, checkboxes centred).
-- **Header:** the logo and "Workspace" in the breadcrumb are plain `<a href="#/files">` links (hash routing).
+- **Header:** the logo and "Workspace" in the breadcrumb are plain `<a href="#/files">` links (hash routing). The logo is `<Logo size={28} tag="PRO" />` from `components/brand/Logo.jsx` (classes `.logo`, `.logo__word`, `.logo__suite`, `.logo__tag`; the old `.gheader__logo/__name/__pro` classes are gone).
 - **Info page (2026-10-31):** `info` is a second reserved route id besides `files` (`resolveRoute` always allows it; `index.check.js` guards both). It is not in the sidebar `nav`, so `AppShell` builds its crumbs (`Workspace › How it works`) itself and passes `infoActive` to the header's "i" link. `App.jsx` must not assume the route is a tool (`tools.find(...)` is undefined there). **In-page links cannot use `href="#section"`**: the hash is the route, so the contents list uses `scrollIntoView` buttons; element ids on the page are prefixed `info-` because tools stay mounted (hidden) and could share ids. Opening Info keeps tools mounted, so their results survive (browser-verified: same DOM node after Info → Back).
 - **Breadcrumb follows the tool's phase (2026-10-31):** `ToolWorkflow` calls `useToolPhase(phase, task.reset)` (`shared/ToolPhase.js`); `App` provides a `ToolPhaseContext` per mounted tool (`{ id, set }`) and keeps `phases[toolId] = { phase, back }`, `AppShell` reads only the active route's entry. On results the crumb is `Workspace › <tool title> › <manifest resultLabel>` (e.g. `Workspace › Diff Check › Diff result`); config/running stay two levels. The tool-name crumb is a button that calls `back` (= `task.reset`), so there is **no "Settings" button on results pages** any more: that crumb is the way back, and the config state survives (it lives in each tool's own `useState`). The entry is removed on unmount (a tool remounted by a dataset reload never shows a stale "result"). Every manifest needs `resultLabel` (checked in `features/index.check.js`).
 - **Compact config pages:** `ToolWorkflow` renders config/running inside `<div className="page page--config">` (max-width 1080px for every tool, tighter padding/gaps, `.field` gap 4px; the key-row link/remove offsets in Compare by Key are retuned for it, see the end of the "settings card" block in `styles.css`). Results pages (their own `.page`) keep the full width. Phones (≤ 900 / 700 px) keep the roomier rules. At 1366×768 eight of ten config pages fit without a vertical scrollbar (Reconcile and Summarize group mode are long by nature); at 1920×1080 all fit.
@@ -281,10 +294,11 @@ Test approach: pure checks in `src/**/*.check.js` (assert scripts) + real-browse
 
 - **The user's original files must always be safe** (said 2026-10-31): nothing may ever overwrite or modify a loaded file; every output is a new file; anything that replaces a loaded slot must be restorable.
 - Wants a **minimal, professional, Excel-green, compact** UI (small controls, sidebar + global header, dense Excel-like tables); first design (airy indigo wizard) was rejected as "too big".
-- **Page-by-page redesign in progress (started 2026-10-31):** the user sends one design image per page; colours and fonts are global (design board above). Done: home page (Files & Spreadsheets) + the shared shell (header, sidebar). Tool pages only inherited the new tokens (palette, Inter, radii, page title); each still waits for its own design. Rule: redesign only, no functionality may change or break. Design elements with no real feature behind them were NOT faked: Auto-save chip, user avatar, "Recent History", cell tags like "92% Match"/"UPPERCASE", "Encoding" (the footer shows file type + size instead); the "Add File / Sheet" button is "Add file" and is disabled when both slots are full.
+- **Page-by-page redesign (started 2026-10-31), superseded 2026-11-11:** the user first sent one design image per page (light, Inter). On 2026-11-11 the user asked for the whole inside of the app to look like the new 3D landing page ("same color theme"), so the app is now dark with Geist (section 14); every page inherits it through the tokens. Earlier per-page layout decisions still stand. Rule: redesign only, no functionality may change or break. Design elements with no real feature behind them were NOT faked: Auto-save chip, user avatar, "Recent History", cell tags like "92% Match"/"UPPERCASE", "Encoding" (the footer shows file type + size instead); the "Add File / Sheet" button is "Add file" and is disabled when both slots are full.
 - Wants **senior-level architecture, reusable components, no throwaway code**, nothing already working may break (regression-checked), proper loaders with elapsed/ETA, proper error handling, optimised JS-only logic.
 - Wants questions asked once for flow corrections, then action. Prefers real verification and honest reporting of what was and was not tested.
 - A "ponytail" (laziest-solution) style hook was active in the session; the user explicitly asked for quality/architecture over minimal code for this project.
+- Likes modern, scroll-driven 3D marketing pages (gave https://vulk-kilnmark.pages.dev/ as the reference) and dislikes "AI slop" styling: gradient text, glowing blobs, pulsing buttons, tilt cards, stock images, emoji-like pills, many-coloured icon grids. Prefers one accent colour, big confident type, real product facts.
 - Auto memory for this project lives at `C:\Users\ManishRana\.claude\projects\c--My-Work-Excel-App\memory\` (PrimeReact v10 pin, design preference, Top-K decision). The implementation plan file is `C:\Users\ManishRana\.claude\plans\i-want-you-to-crispy-acorn.md` (outside the repo; its Phase 6 is only partly complete, see section 10).
 
 ## 13. Suggested next tasks
@@ -295,3 +309,95 @@ Test approach: pure checks in `src/**/*.check.js` (assert scripts) + real-browse
 2. Open one download from every tool in desktop Excel; fix anything Excel "repairs".
 3. Optional features listed in section 10.7 (ignore-words list and multi-column weighted matching are the most requested-sounding).
 4. Add a short `README.md` for developers (run/build/check, how to add a tool) based on sections 2, 4 and 5 of this file.
+
+## 14. Landing page, dark theme and logo (2026-11-11)
+
+### 14.1 3D landing page (`pages/LandingPage.jsx`, `pages/landing/*`, `src/landing.css`)
+- Modelled on the user's reference https://vulk-kilnmark.pages.dev/ (studied in a browser: three.js r170 on one fixed full-screen
+  canvas, Lenis smooth scroll, Geist type, a 0→100 preloader counter, chapters of text scrolling over the 3D world). No GSAP there, none here.
+- Deps: `three@0.170` (only in the lazy `scene` chunk, ~125 kB gzip, so the app's main chunk does not grow), `lenis` (smooth scroll,
+  `autoRaf`), `@fontsource-variable/geist` + `geist-mono`. Everything is bundled and procedural (no models, textures or fonts fetched),
+  so `safety.check.js` (no network) still holds.
+- How it works: each chapter is a `<section>`; its **anchor** = scroll position where it is centred. Scroll → fractional chapter index
+  (`progress()` in LandingPage) → `scene.js` blends the cells from one chapter's layout to the next (per-cell stagger = a wave, a small arc
+  mid-flight) and the camera between two viewpoints (`CAMERAS`). Each layout is precomputed once (positions, sizes, colours for 1008
+  instances = 36 columns × 28 rows, which is also 12×12×7 for the final cube). Layouts: `city` (hero), `two`, `matched`, `close`, `changed`,
+  `balanced` (Compare tools), `sheet` (the "runs on your machine" statement), `messy`, `once`, `tidy`, `apart`, `built`, `together`,
+  `totals` (one-file tools), `cube` (drag to turn; camera `far` for the closing CTA). Column letters / row numbers are canvas textures on the floor.
+- Header has a formula bar (name box + fx) that types the current chapter's `ref`/`formula` from `content.js`.
+- To add or reorder a chapter: edit `content.js` only (`kind` = title | word | limit | turn); add a layout + camera in `scene.js` if it needs a new `scene`.
+- Reduced motion: no Lenis, no idle spin, no rain, no typing; WebGL failure: `.no-gl` shows a CSS grid background. On unmount Lenis and the
+  renderer are disposed and the window scrolls to the top. `App.jsx` no longer shows the welcome modal over the landing page (`welcome && !isLanding`).
+- Removed: the old static landing (gradient text, orbs, tilt cards, marquee, pulse buttons) and its stock images `src/assets/{hero,cleaning,comparison}.jpg`.
+- Known exception to the 7px rule: the landing page's nav/buttons are 999px pills, copied from the reference and approved by the user
+  ("landing page is great"). The app itself keeps the 7px rule.
+
+### 14.2 Dark theme for the whole app
+- **One token set**: `src/theme/theme.css` `:root` is the only place CSS variables are defined (the duplicate `:root` that used to sit
+  in `styles.css` and override it was removed). `tokens.js` mirrors the values; `tokens.check.js` asserts `--xl-green` and `--bg` match.
+- Token roles: `--bg` page · `--bg-sunken` wells (inputs, table heads, footers) · `--surface` cards/header · `--surface-elevated`
+  menus, dialogs, toasts · `--surface-hover/-active/-3` interaction steps · `--border-soft < --border < --border-strong` ·
+  `--text > --text-2 > --text-muted > --text-dim` · status pairs `--danger` (text) / `--danger-fill` (button) / `--danger-bg` /
+  `--danger-border`, same idea for warning, info, success · `--match-*`, `--fuzzy-*`, `--old-*` for word highlights and old→new cells.
+- **PrimeReact Fluent → variables** (`vite.config.js`, plugin `excel-theme`): Fluent ships literal light hex colours. Each one is mapped by
+  the *role of the CSS property it appears in*: `fg` (color/fill/stroke/--text*), `bg` (background*, --surface*, --highlight-bg), `line`
+  (border/outline/box-shadow). Example: `#ffffff` → `var(--surface)` as a background but stays white as text (it is the text on green
+  buttons). Office blue → green (`--accent` as text, `--xl-green` as fill). A colour without a mapping for that role is left alone.
+  If a PrimeReact widget looks wrong, add its hex to `FLUENT` rather than overriding in CSS.
+- Overrides that need a solid surface on dark live at the end of `styles.css` ("dark theme: PrimeReact pieces"): toasts (solid card +
+  coloured left edge), tooltip, dialog mask, sortable headers, slider/progress tracks.
+- **Status/band tags keep Excel's pastel fills on purpose** (`core/bands.js`: Good/Neutral/Bad colours), because they are the same
+  colours the user gets in the downloaded workbook. Do not "dark-ify" `BANDS`: the export uses them.
+- Shell restyle: header and sidebar sit on `--bg` with hairlines; sidebar section titles in mono caps; active item = raised surface +
+  2px green bar on the left; page titles 1.6rem/600 with tight tracking (like the landing type).
+
+### 14.3 Logo
+- `components/brand/Logo.jsx`: a 7px-radius green tile with faint sheet grid lines and one selected cell drawn with Excel's **fill handle**
+  (the small square at the corner of a selection). Used in the app header (`<Logo tag="PRO" />`), the landing nav/footer (`<LogoMark />`)
+  and `public/favicon.svg` (same SVG by hand).
+
+### 14.4 UI bugs found and fixed in the sweep
+- Grid paginator read "Showing1–27of27rows": PrimeReact makes `.p-paginator-current` a flex box, which drops the spaces between text
+  and `<strong>`s. Fixed with `display: block; white-space: nowrap`.
+- Search icon inside every results-grid search box was invisible: the input is positioned and painted over the absolutely positioned
+  icon. Fixed with `.p-icon-field > .p-input-icon { z-index: 1 }`.
+- Phones: the file name on a Files-page card was cut to "Past…" because the rows/cols chip shared its line; the chip now wraps under it.
+- Sidebar section labels were below 3.6:1 contrast; `--text-dim` raised to `#74817b`.
+- **Results screens broken by commit 3675e02 ("landing page")**, which rewrote every `*Results.jsx` and read fields the engines never
+  return. Fixed by comparing each file with the engine/worker output and with cb4e3b8 (the last good version), keeping the newer markup:
+  - Reconcile: reference came from non-existent `keyA/keyB` (now key-column text at `repA/repB`), amounts from `hasAmountA`/per-row
+    `amountA` (now per-item `sumA/sumB`), status chip colour from `meta.color.bg` (now `meta.bg/fg`), expanded lines from `ctx.amountsA`
+    (now `result.amountA`). Every row had shown "(no reference)" and "—". "Matched on" no longer wraps (rows were three lines tall).
+  - Duplicates: decisions were a plain object instead of `{ keepOverride: Map, ignored: Set }` and `applyDecisions(...).stats` was misread:
+    all-zero KPIs, a disabled download, and review choices never reached the export. `result.keptRow` → `result.keep`.
+  - Fuzzy Lookup: status (Matched / Ambiguous / Not found) was not shown (BandTag ignores `label`); Not-found rows showed the nearest
+    row's pulled values as if matched. Match % column and the muted "nearest: …" text restored.
+  - Compare by Key: `changedColumns` called with the wrong signature and the tolerance dropped from `makeEqual`, so "Changed values"
+    and the expansion were wrong; added/removed expansion misused `columnTexts`.
+  - Diff Check: `explainPair` was given token arrays instead of texts (highlights / word breakdown wrong); Rank column restored for top-K > 1.
+  - Lookup, Reconcile, Compare by Key: the row-expander column was missing although `expansion` was passed (details could not be opened).
+  - Split: restored the over-MAX_GROUPS error and the >100-sheets warning; Cleaner: restored "Showing the first N of M changes".
+  - Not restored (looked deliberate): Compare by Key's "Changed cells" count column, Split's "Blank cells" KPI. Split's KPI says
+    "Files to create" even in one-workbook mode. Combine, Summarize, Column Builder had no data regressions.
+  - Browser-verified on the test tables: Reconcile (refs, amounts, coloured statuses, expanded lines), Diff Check (word breakdown),
+    Compare by Key (old → new values), Duplicates (KPIs; ticking "Not duplicates" changes them), Lookup (statuses, blank Not-found), Split.
+  - **Lesson:** a large restyle that touches result components must be re-run tool by tool with real data; `npm run check` does not cover UI.
+
+### 14.5 How it was verified (2026-11-11)
+- Browser (Claude's built-in browser, dev server on :5173): landing at 1440×900 and 375×812 (every chapter, mid-scroll morph,
+  drag-to-turn checked numerically on instance matrices, hand-off to the app). App: two test tables loaded through the app's own
+  **Paste table** dialog (setting the textarea with the native value setter + `input` event works), then every tool's settings screen,
+  the results of Diff Check, Reconcile and Summarize, the Files page at desktop and phone width, the mobile drawer.
+- An in-page audit script (computed colours, alpha-composited against ancestors) checked every visible text element for contrast
+  < 3.6:1 and every surface for leftover light backgrounds, on all ten settings screens and the results screens: clean except band tags (intended).
+- `npm run build` OK; `npm run check` 49/49; `npm audit --omit=dev` 0 vulnerabilities.
+- NOT verified: Firefox/Safari rendering of the 3D page, a real GPU-less machine, results screens of tools whose settings need column
+  picks the automation could not make (PrimeReact dropdowns need real mouse events).
+
+### 14.6 Gotchas from this session
+- Some source files have **CRLF** line endings (`styles.css` was, `GlobalHeader.jsx` is): multi-line string replacements written with `\n`
+  silently do nothing. Normalise first or use the editor tool.
+- Long bash heredocs containing quotes get mangled by the Windows shell: write scripts to a file and run them.
+- Testing in a browser: navigating to the same URL with only a different hash does **not** reload the page (hash routing); use `location.reload()` after code changes.
+- Replacing `color: var(--xl-green)` with a regex also hit `border-color: …` (substring). Anchor on the property name.
+- three.js `InstancedMesh` + `instanceColor`: set `frustumCulled = false` when instances move far from the original bounds.
